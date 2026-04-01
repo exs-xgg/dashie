@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlmodel
+langgraph
+langchain-google-genai
+langchain-mcp-adapters
+mcp
+pydantic
+asyncpg
+psycopg2-binary
+python-dotenv
+alembic
+jinja2
+pydantic-settings
