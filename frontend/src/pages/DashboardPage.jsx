@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import QueryInput from '../components/query/QueryInput';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
@@ -9,7 +10,15 @@ import { BarChart, Users, ArrowUpRight, Copy, Edit3, Trash2, Code2, List, BarCha
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage() {
-  const { panels } = useStore();
+  const { id } = useParams();
+  const { panels, fetchPanels, setSelectedDashboardId } = useStore();
+
+  useEffect(() => {
+    if (id) {
+      setSelectedDashboardId(id);
+      fetchPanels(id);
+    }
+  }, [id]);
 
   const layout = [
     { i: '1', x: 0, y: 0, w: 8, h: 4 },

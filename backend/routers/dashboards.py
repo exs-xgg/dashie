@@ -67,3 +67,20 @@ async def delete_panel(
     session.delete(panel)
     session.commit()
     return {"status": "deleted"}
+@router.delete("/{dashboard_id}")
+async def delete_dashboard(
+    dashboard_id: uuid.UUID,
+    session: Session = Depends(get_session)
+):
+    dashboard = session.get(Dashboard, dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+        
+    # Also delete associated panels for cleanup
+    panels = session.exec(select(DashboardPanel).where(DashboardPanel.dashboard_id == dashboard_id)).all()
+    for panel in panels:
+        session.delete(panel)
+        
+    session.delete(dashboard)
+    session.commit()
+    return {"status": "deleted"}

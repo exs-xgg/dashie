@@ -11,6 +11,7 @@ class DataSource(SQLModel, table=True):
     database: str
     user: str
     encrypted_password: str
+    db_type: str = Field(default="postgresql") # postgresql, mysql, mongodb
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -34,7 +35,8 @@ class Dashboard(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    # panels = Relationship(back_populates="dashboard")
+    # Relationship to panels
+    panels: List["DashboardPanel"] = Relationship(back_populates="dashboard")
 
 class DashboardPanel(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -48,6 +50,9 @@ class DashboardPanel(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+    # Relationships
+    dashboard: Dashboard = Relationship(back_populates="panels")
+
 class QueryHistory(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     panel_id: Optional[uuid.UUID] = Field(default=None, foreign_key="dashboardpanel.id")
@@ -56,3 +61,13 @@ class QueryHistory(SQLModel, table=True):
     execution_time_ms: int
     status: str # "success", "error"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MCPConnection(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
+    server_url: str
+    api_key: Optional[str] = None # Should be encrypted in production
+    description: Optional[str] = None
+    status: str = Field(default="disconnected") # connected, disconnected, error
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
