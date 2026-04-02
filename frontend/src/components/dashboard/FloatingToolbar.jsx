@@ -17,16 +17,16 @@ export default function FloatingToolbar() {
       <div className="flex items-center border-r border-zinc-200 dark:border-zinc-800 pr-2 mr-1 gap-1">
         <button
           onClick={() => setAddChartModalOpen(true)}
-          className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all group relative"
-          title="Add AI Chart"
+          className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all group relative rainbow-border"
+          title="Add Chart with AI"
         >
           <BarChart2 className="w-5 h-5" />
           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
-            Add Chart
+            Add Chart with AI
           </span>
         </button>
       </div>
-      
+
       <div className="flex items-center gap-1">
         <button
           onClick={() => handleAddText('title')}
@@ -38,7 +38,7 @@ export default function FloatingToolbar() {
             Add Title
           </span>
         </button>
-        
+
         <button
           onClick={() => handleAddText('caption')}
           className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all group relative"
