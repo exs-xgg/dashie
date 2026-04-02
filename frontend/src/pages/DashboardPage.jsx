@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import QueryInput from '../components/query/QueryInput';
+import AddChartModal from '../components/dashboard/AddChartModal';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -29,8 +29,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <QueryInput />
-      
+      <AddChartModal />
       <ResponsiveGridLayout
         className="layout"
         layouts={{ lg: layout }}

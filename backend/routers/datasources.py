@@ -68,20 +68,38 @@ async def scan_datasource(datasource_id: uuid.UUID, session: Session = Depends(g
     # Run the agentic scan
     raw_scan_result = await agent_service.scan_schema(str(datasource_id), uri)
     
-    # Simplified parsing for demo. REAL parsing would be more robust.
-    # We will assume JSON format here, let's process it carefully.
-    
-    # Store manifest persistence (mocking for now to avoid logic bloat)
-    # real: loop through table names, create SchemaManifest records
-    
-    manifest = SchemaManifest(
-        data_source_id=datasource_id,
-        table_name="full_schema",
-        columns=[], # JSONB
-        ai_notes=raw_scan_result,
-        last_scanned_at=datetime.utcnow()
-    )
-    session.add(manifest)
-    session.commit()
-    
-    return {"status": "success", "raw_result": raw_scan_result}
+    import json
+    try:
+        data = json.loads(raw_scan_result)
+        # Clean current manifests for this datasource
+        old_manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
+        for m in old_manifests:
+            session.delete(m)
+            
+        for table in data:
+            manifest = SchemaManifest(
+                data_source_id=datasource_id,
+                table_name=table.get("table_name", "unknown"),
+                columns=table.get("columns", []),
+                sample_rows=table.get("sample_rows", []),
+                ai_notes=None,
+                last_scanned_at=datetime.utcnow()
+            )
+            session.add(manifest)
+            
+        session.commit()
+        return {"status": "success", "message": f"Synced {len(data)} tables"}
+        
+    except json.JSONDecodeError:
+        # Fallback if the AI gives unstructured resp
+        manifest = SchemaManifest(
+            data_source_id=datasource_id,
+            table_name="full_schema_raw",
+            columns=[],
+            sample_rows=[],
+            ai_notes=raw_scan_result,
+            last_scanned_at=datetime.utcnow()
+        )
+        session.add(manifest)
+        session.commit()
+        return {"status": "partial_success", "message": "Stored raw notes, could not parse structure."}

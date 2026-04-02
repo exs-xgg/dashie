@@ -28,6 +28,7 @@ class SchemaManifest(SQLModel, table=True):
     data_source_id: uuid.UUID = Field(foreign_key="datasource.id")
     table_name: str
     columns: Any = Field(sa_column=Column(JSON)) # JSON List of {name, type, is_primary, is_foreign}
+    sample_rows: Optional[Any] = Field(default=None, sa_column=Column(JSON))
     ai_notes: Optional[str] = None
     last_scanned_at: datetime = Field(default_factory=datetime.utcnow)
 

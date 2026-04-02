@@ -7,6 +7,7 @@ const useStore = create((set, get) => ({
   selectedDashboardId: null,
   panels: [],
   mcpConnections: [],
+  isAddChartModalOpen: false,
   dateRange: {
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -46,6 +47,7 @@ const useStore = create((set, get) => ({
   
   setDateRange: (range) => set({ dateRange: range }),
   setSelectedDashboardId: (id) => set({ selectedDashboardId: id }),
+  setAddChartModalOpen: (isOpen) => set({ isAddChartModalOpen: isOpen }),
 
   // CRUD Dashboards
   createDashboard: async (data) => {
@@ -92,6 +94,16 @@ const useStore = create((set, get) => ({
       return res.data;
     } catch (err) {
       console.error("Failed to test connection:", err);
+      throw err;
+    }
+  },
+
+  syncDataSourceSchema: async (id) => {
+    try {
+      const res = await axios.post(`/api/datasources/${id}/scan`);
+      return res.data;
+    } catch (err) {
+      console.error("Failed to sync datasource schema:", err);
       throw err;
     }
   },

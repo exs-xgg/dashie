@@ -66,9 +66,22 @@ class AgentService:
         agent = await self.get_agent_for_datasource(datasource_id, connection_uri)
         
         # Instruct the agent to systematically explore the database
-        scan_prompt = "Perform a thorough scan of all tables and their column schemas. Return a structured list of table names and column details."
+        scan_prompt = """Perform a thorough scan of all tables and their column schemas. 
+Also retrieve up to 3 sample rows from each table. 
+Return your findings EXACTLY as a raw structured JSON array without markdown formatting or code blocks. Each object in the array MUST have:
+- 'table_name' (string)
+- 'columns' (list of objects with 'name' and 'type' strings)
+- 'sample_rows' (list of objects representing rows, keys are columns)
+"""
         
         response = await agent.ainvoke({"messages": [HumanMessage(content=scan_prompt)]})
-        return response["messages"][-1].content
+        # Strip markdown in case it puts it
+        content = response["messages"][-1].content
+        if content.startswith("```json"):
+            content = content.replace("```json\\n", "").replace("```", "").strip()
+        elif content.startswith("```"):
+            content = content.replace("```\\n", "").replace("```", "").strip()
+            
+        return content
 
 agent_service = AgentService()

@@ -27,6 +27,7 @@ erDiagram
         uuid data_source_id FK
         string table_name
         json columns
+        json sample_rows
         string ai_notes
         datetime last_scanned_at
     }

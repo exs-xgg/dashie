@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
-import { Database, Terminal, Plus, Search, Trash2, Edit2, Globe, Server, Check, X, Shield, Lock, Activity } from 'lucide-react';
+import { Database, Terminal, Plus, Search, Trash2, Edit2, Globe, Server, Check, X, Shield, Lock, Activity, RefreshCw } from 'lucide-react';
 import useStore from '../stores/useStore';
 import { format } from 'date-fns';
 
 export default function ConnectionsPage() {
-  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, deleteDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection } = useStore();
+  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, deleteDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection, syncDataSourceSchema } = useStore();
   const [activeTab, setActiveTab] = useState('databases'); // databases, mcp
   const [isDBModalOpen, setIsDBModalOpen] = useState(false);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
@@ -12,6 +12,7 @@ export default function ConnectionsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'db'|'mcp', id: string }
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState(null); // { status: 'success'|'error', message: string }
+  const [syncingId, setSyncingId] = useState(null);
 
   useEffect(() => {
     fetchDataSources();
@@ -85,6 +86,17 @@ export default function ConnectionsPage() {
         setTestResult({ status: 'error', message: errMsg });
     } finally {
         setIsTesting(false);
+    }
+  };
+
+  const handleSyncSchema = async (id) => {
+    setSyncingId(id);
+    try {
+        await syncDataSourceSchema(id);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setSyncingId(null);
     }
   };
 
@@ -166,6 +178,14 @@ export default function ConnectionsPage() {
                     </td>
                     <td className="px-6 py-5 text-right">
                        <div className="flex items-center justify-end gap-1">
+                         <button
+                           onClick={(e) => { e.stopPropagation(); handleSyncSchema(ds.id); }}
+                           disabled={syncingId === ds.id}
+                           className="p-1.5 text-zinc-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                           title="Database Schema Sync"
+                         >
+                           <RefreshCw className={`w-4 h-4 ${syncingId === ds.id ? 'animate-spin text-blue-500' : ''}`} />
+                         </button>
                          <button
                            onClick={(e) => { e.stopPropagation(); handleOpenDBModal(ds); }}
                            className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 transition-all"
