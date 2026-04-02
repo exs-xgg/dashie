@@ -105,10 +105,9 @@ export default function SettingsPage() {
               
               <div className="mt-12 group relative rounded-xl h-64 grayscale opacity-40 hover:opacity-100 transition-all cursor-crosshair overflow-hidden border border-zinc-200 dark:border-zinc-800">
                 <img 
-                  src="https://lh3.googleusercontent.com/..." 
+                  src="/assets/schema-visualization.png" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                   alt="Schema Visualization"
-                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1542614391-460d3dcecc56?q=80&w=1000&auto=format&fit=crop"; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                    <div className="flex items-center gap-3">

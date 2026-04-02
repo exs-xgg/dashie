@@ -46,7 +46,7 @@ export default function TopBar() {
           </button>
           <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-200 ml-2">
             <img 
-              src="https://lh3.googleusercontent.com/a/ALm5wu0p_u_..." 
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100&h=100" 
               alt="Avatar" 
               className="w-full h-full object-cover grayscale opacity-80"
               onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff"; }}
