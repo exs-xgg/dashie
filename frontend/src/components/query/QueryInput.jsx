@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { AutoAwesome } from 'lucide-react';
-import { Search, Wand2, Sparkles } from 'lucide-react';
+import { Search, Wand2, Sparkles, ChevronRight } from 'lucide-react';
 
 export default function QueryInput() {
   const [prompt, setPrompt] = useState("");
@@ -43,5 +42,3 @@ export default function QueryInput() {
   );
 }
 
-// Fixed Lucide import check below
-import { ChevronRight } from 'lucide-react';

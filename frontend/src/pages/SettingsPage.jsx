@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Link, Terminal, Search, Check, Table, ExpandMore, Info, BarChart3 } from 'lucide-react';
+import { Database, Link, Terminal, Search, Check, Table, ChevronDown, Info, BarChart3 } from 'lucide-react';
 import axios from 'axios';
 import useStore from '../stores/useStore';
 
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                     <span className="font-bold text-zinc-900 dark:text-zinc-50">{t.n}</span>
                     <span className="text-[9px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-bold uppercase text-zinc-500">{t.c} Cols</span>
                   </div>
-                  <ExpandMore className="w-4 h-4 text-zinc-400" />
+                  <ChevronDown className="w-4 h-4 text-zinc-400" />
                 </div>
               ))}
               
