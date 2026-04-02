@@ -4,12 +4,14 @@ import useStore from '../stores/useStore';
 import { format } from 'date-fns';
 
 export default function ConnectionsPage() {
-  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection } = useStore();
+  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection } = useStore();
   const [activeTab, setActiveTab] = useState('databases'); // databases, mcp
   const [isDBModalOpen, setIsDBModalOpen] = useState(false);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'db'|'mcp', id: string }
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null); // { status: 'success'|'error', message: string }
 
   useEffect(() => {
     fetchDataSources();
@@ -17,7 +19,15 @@ export default function ConnectionsPage() {
   }, []);
 
   const handleOpenDBModal = (item = null) => {
-    setEditingItem(item || { name: '', host: 'localhost', port: '5432', database: '', user: '', password: '', db_type: 'postgresql' });
+    if (item) {
+        setEditingItem({
+            ...item,
+            password: item.encrypted_password || ''
+        });
+    } else {
+        setEditingItem({ name: '', host: 'localhost', port: '5432', database: '', user: '', password: '', db_type: 'postgresql' });
+    }
+    setTestResult(null);
     setIsDBModalOpen(true);
   };
 
@@ -51,6 +61,32 @@ export default function ConnectionsPage() {
         await createMCPConnection(editingItem);
     }
     setIsMCPModalOpen(false);
+  };
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+        const result = await testConnection(editingItem);
+        setTestResult({ status: 'success', message: result.message });
+    } catch (err) {
+        let errMsg = "Connection failed";
+        const detail = err.response?.data?.detail;
+        
+        if (typeof detail === 'string') {
+            errMsg = detail;
+        } else if (Array.isArray(detail)) {
+            errMsg = detail.map(d => `${d.loc?.[d.loc.length - 1] || 'Error'}: ${d.msg}`).join(', ');
+        } else if (typeof detail === 'object' && detail !== null) {
+            errMsg = JSON.stringify(detail);
+        } else {
+            errMsg = err.message || "Connection failed";
+        }
+        
+        setTestResult({ status: 'error', message: errMsg });
+    } finally {
+        setIsTesting(false);
+    }
   };
 
   return (
@@ -274,19 +310,35 @@ export default function ConnectionsPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-6">
-                    <button 
-                        type="button"
-                        className="flex-1 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold rounded-xl text-sm hover:bg-zinc-50"
-                    >
-                        Test Connection
-                    </button>
-                    <button 
-                        type="submit"
-                        className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3 rounded-xl font-bold text-sm shadow-xl"
-                    >
-                        Save Configuration
-                    </button>
+                    <div className="flex flex-col gap-4 pt-6">
+                    {testResult && (
+                        <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-3 ${testResult.status === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'}`}>
+                            {testResult.status === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                            {testResult.message}
+                        </div>
+                    )}
+                    <div className="flex gap-4">
+                        <button 
+                            type="button"
+                            disabled={isTesting}
+                            onClick={handleTestConnection}
+                            className="flex-1 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold rounded-xl text-sm hover:bg-zinc-50 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isTesting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                                    Testing...
+                                </>
+                            ) : "Test Connection"}
+                        </button>
+                        <button 
+                            type="submit"
+                            disabled={isTesting}
+                            className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3 rounded-xl font-bold text-sm shadow-xl disabled:opacity-50"
+                        >
+                            Save Configuration
+                        </button>
+                    </div>
                   </div>
                </div>
             </form>

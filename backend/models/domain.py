@@ -3,15 +3,20 @@ from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 from datetime import datetime
 import uuid
 
-class DataSource(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+class DataSourceBase(SQLModel):
     name: str = Field(index=True)
     host: str
     port: int = Field(default=5432)
     database: str
     user: str
-    encrypted_password: str
     db_type: str = Field(default="postgresql") # postgresql, mysql, mongodb
+
+class DataSourceCreate(DataSourceBase):
+    password: str
+
+class DataSource(DataSourceBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    encrypted_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

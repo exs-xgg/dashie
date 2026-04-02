@@ -77,6 +77,16 @@ const useStore = create((set, get) => ({
     }
   },
 
+  testConnection: async (data) => {
+    try {
+      const res = await axios.post('/api/datasources/test-connection', data);
+      return res.data;
+    } catch (err) {
+      console.error("Failed to test connection:", err);
+      throw err;
+    }
+  },
+
   // CRUD MCP Connections
   fetchMCPConnections: async () => {
     try {

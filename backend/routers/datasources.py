@@ -1,16 +1,39 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from typing import Optional, List, Any
 from sqlmodel import Session, select
 from database import get_session
-from models.domain import DataSource, SchemaManifest
+from models.domain import DataSource, SchemaManifest, DataSourceCreate
 from services.agent_service import agent_service
 from services.mcp_service import mcp_service # for raw tool access
+from services.database_service import database_service
+from pydantic import BaseModel
 import uuid
 from datetime import datetime
 
 router = APIRouter()
 
+@router.post("/test-connection")
+async def test_connection(config: DataSourceCreate):
+    result = database_service.test_connection(config.dict())
+    if result["status"] == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+    result = database_service.test_connection(config.dict())
+    if result["status"] == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
 @router.post("/")
-async def create_datasource(datasource: DataSource, session: Session = Depends(get_session)):
+async def create_datasource(payload: DataSourceCreate, session: Session = Depends(get_session)):
+    # Map DataSourceCreate to DataSource (database model)
+    datasource_data = payload.dict()
+    password = datasource_data.pop("password")
+    
+    datasource = DataSource(
+        **datasource_data,
+        encrypted_password=password # In real app, encrypt this
+    )
+    
     session.add(datasource)
     session.commit()
     session.refresh(datasource)
