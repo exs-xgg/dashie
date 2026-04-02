@@ -39,7 +39,7 @@ export default function SettingsPage() {
             AI READINESS ACTIVE
           </div>
         </div>
-        <p className="text-zinc-500 max-w-2xl text-lg">Connect your data architecture to the generative engine. Architect AI will map your schema and build a bespoke semantic model.</p>
+        <p className="text-zinc-500 max-w-2xl text-lg">Connect your data architecture to the generative engine. dashie will map your schema and build a bespoke semantic model.</p>
       </div>
 
       <div className="grid grid-cols-12 gap-12">

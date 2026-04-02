@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import datasources, query, dashboards, mcp_connections
 from database import create_db_and_tables
 
-app = FastAPI(title="Architect AI - Dynamic Dashboard Builder")
+app = FastAPI(title="dashie - Dynamic Dashboard Builder")
 
 app.add_middleware(
     CORSMiddleware,

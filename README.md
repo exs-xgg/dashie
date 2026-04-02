@@ -1,6 +1,6 @@
-# 🏛️ Architect AI - Dynamic Dashboard Builder
+# 🏛️ dashie - Dynamic Dashboard Builder
 
-Architect AI is an advanced, AI-powered analytical platform that transforms how you interact with your data. It leverages **Google Gemini** and the **Model Context Protocol (MCP)** to provide a seamless natural language interface for PostgreSQL databases, allowing anyone to build professional-grade dashboards in minutes.
+dashie is an advanced, AI-powered analytical platform that transforms how you interact with your data. It leverages **Google Gemini** and the **Model Context Protocol (MCP)** to provide a seamless natural language interface for PostgreSQL databases, allowing anyone to build professional-grade dashboards in minutes.
 
 ---
 
@@ -119,4 +119,4 @@ The `backend/.env` file supports the following options:
 
 ## 📜 License
 
-MIT License - Copyright (c) 2024 Architect AI
+MIT License - Copyright (c) 2024 dashie

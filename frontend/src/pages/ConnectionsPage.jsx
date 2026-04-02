@@ -225,7 +225,7 @@ export default function ConnectionsPage() {
                   <div className="flex justify-between items-start">
                     <div>
                         <h2 className="text-2xl font-bold">Database Access</h2>
-                        <p className="text-zinc-500 text-sm">Provision credentials for Architect AI.</p>
+                        <p className="text-zinc-500 text-sm">Provision credentials for dashie.</p>
                     </div>
                     <button type="button" onClick={() => setIsDBModalOpen(false)} className="p-2 text-zinc-400 hover:bg-zinc-100 rounded-full"><X className="w-5 h-5"/></button>
                   </div>
@@ -352,7 +352,7 @@ export default function ConnectionsPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
           <div className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-800">
             <h3 className="text-xl font-bold mb-4">Disconnect Server?</h3>
-            <p className="text-zinc-500 mb-8">Architect AI will lose access to the context provided by this server. This cannot be undone.</p>
+            <p className="text-zinc-500 mb-8">dashie will lose access to the context provided by this server. This cannot be undone.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 font-bold text-zinc-500 hover:text-zinc-700">Cancel</button>
               <button 

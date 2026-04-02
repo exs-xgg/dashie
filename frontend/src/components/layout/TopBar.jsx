@@ -8,8 +8,6 @@ export default function TopBar() {
   return (
     <header className="w-full sticky top-0 z-40 bg-zinc-50 dark:bg-zinc-950 flex justify-between items-center px-8 h-16 border-b border-zinc-200 dark:border-zinc-800">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-50">Architect AI</h1>
-        <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700 mx-2"></div>
         <div className="flex items-center gap-2 text-on-surface-variant group cursor-pointer">
           <span className="text-sm font-semibold tracking-tight">
             {currentDashboard?.name || "Project Sales Dashboard"}

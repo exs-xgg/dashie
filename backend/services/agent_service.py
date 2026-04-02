@@ -32,7 +32,7 @@ class AgentService:
         agent = await self.get_agent_for_datasource(datasource_id, connection_uri)
         
         system_prompt = f"""
-        You are a highly skilled SQL analyst for Architect AI.
+        You are a highly skilled SQL analyst for dashie.
         Your goal is to answer the user's natural language question by:
         1. Using available database tools to inspect schema if not provided.
         2. Generating a query using standard PostgreSQL.

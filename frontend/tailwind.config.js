@@ -7,20 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#f9f9f9',
+        background: '#fcfcfd',
         surface: '#ffffff',
-        primary: '#5f5e61',
-        secondary: '#006e2e',
-        'secondary-dim': '#006127',
-        error: '#9e3f4e',
-        'on-surface': '#2d3435',
-        'on-surface-variant': '#5a6061',
+        primary: '#6d28d9', // Deep Purple
+        secondary: '#7c3aed', // Purpleish
+        'secondary-dim': '#6d28d9',
+        accent: '#f43f5e', // Rose
+        error: '#ef4444',
+        'on-surface': '#0f172a',
+        'on-surface-variant': '#64748b',
         zinc: {
-          950: '#09090b',
+          950: '#020617',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Noto Sans', 'sans-serif'],
+        logo: ['Barriecito', 'cursive'],
       },
       borderRadius: {
         'lg': '0.5rem',
