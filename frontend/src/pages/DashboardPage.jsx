@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import AddChartModal from '../components/dashboard/AddChartModal';
 import EditPanelModal from '../components/dashboard/EditPanelModal';
 import DashboardPanelCard from '../components/dashboard/DashboardPanelCard';
+import DashboardSettingsModal from '../components/dashboard/DashboardSettingsModal';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -12,7 +13,8 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage() {
   const { id } = useParams();
-  const { panels, fetchPanels, setSelectedDashboardId, deletePanel, saveDashboardLayout, editingPanel, setEditingPanel, isEditMode } = useStore();
+  const { panels, fetchPanels, setSelectedDashboardId, deletePanel, saveDashboardLayout, editingPanel, setEditingPanel, isEditMode, dashboards } = useStore();
+  const currentDashboard = dashboards.find(d => d.id === id);
 
   useEffect(() => {
     if (id) {
@@ -55,6 +57,9 @@ export default function DashboardPage() {
         isOpen={!!editingPanel} 
         onClose={() => setEditingPanel(null)} 
       />
+      <DashboardSettingsModal />
+      
+
       {panels.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
           <p className="text-zinc-500 mb-4">No charts yet. {isEditMode ? 'Click "Add Chart" to get started.' : 'Switch to Edit Mode to add charts.'}</p>

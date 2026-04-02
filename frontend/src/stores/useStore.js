@@ -8,6 +8,7 @@ const useStore = create((set, get) => ({
   panels: [],
   mcpConnections: [],
   isAddChartModalOpen: false,
+  isDashboardSettingsModalOpen: false,
   isEditMode: false, // Default to View Only
   dateRange: {
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
@@ -126,6 +127,7 @@ const useStore = create((set, get) => ({
   setDateRange: (range) => set({ dateRange: range }),
   setSelectedDashboardId: (id) => set({ selectedDashboardId: id }),
   setAddChartModalOpen: (isOpen) => set({ isAddChartModalOpen: isOpen }),
+  setDashboardSettingsModalOpen: (isOpen) => set({ isDashboardSettingsModalOpen: isOpen }),
 
   // CRUD Dashboards
   createDashboard: async (data) => {

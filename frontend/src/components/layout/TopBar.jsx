@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, Edit2, Eye } from 'lucide-react';
+import { Calendar, Edit2, Eye, Settings } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function TopBar() {
-  const { dateRange, setDateRange, dashboards, selectedDashboardId, setAddChartModalOpen, updateDashboard, isEditMode, setIsEditMode } = useStore();
+  const { dateRange, setDateRange, dashboards, selectedDashboardId, setAddChartModalOpen, updateDashboard, isEditMode, setIsEditMode, setDashboardSettingsModalOpen } = useStore();
   const [isEditing, setIsEditing] = React.useState(false);
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
   const [editValue, setEditValue] = React.useState("");
@@ -106,12 +106,21 @@ export default function TopBar() {
           </div>
 
           {isEditMode && (
-            <button 
-              onClick={() => setAddChartModalOpen(true)}
-              className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold rounded hover:bg-zinc-800 transition-all active:scale-95 shadow-md shadow-zinc-950/10"
-            >
-              Add Chart
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDashboardSettingsModalOpen(true)}
+                className="p-2 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
+                title="Dashboard Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setAddChartModalOpen(true)}
+                className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold rounded hover:bg-zinc-800 transition-all active:scale-95 shadow-md shadow-zinc-950/10"
+              >
+                Add Chart
+              </button>
+            </div>
           )}
         </div>
       </div>
