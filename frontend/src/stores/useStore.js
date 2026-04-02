@@ -70,6 +70,17 @@ const useStore = create((set, get) => ({
     }
   },
 
+  addTextPanel: async (dashboardId, type = 'title') => {
+    const data = {
+      title: type === 'title' ? 'New Title' : 'New Caption',
+      content: type === 'title' ? '# New Title' : 'Write your caption here...',
+      chart_type: 'text',
+      layout: { w: type === 'title' ? 12 : 4, h: 1, x: 0, y: Infinity },
+      chart_config: { text_type: type }
+    };
+    return get().createPanel(dashboardId, data);
+  },
+
   deletePanel: async (dashboardId, panelId) => {
      try {
        await axios.delete(`/api/dashboards/${dashboardId}/panels/${panelId}`);

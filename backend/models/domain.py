@@ -47,11 +47,12 @@ class Dashboard(SQLModel, table=True):
 class DashboardPanel(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     dashboard_id: uuid.UUID = Field(foreign_key="dashboard.id")
-    data_source_id: uuid.UUID = Field(foreign_key="datasource.id")
+    data_source_id: Optional[uuid.UUID] = Field(default=None, foreign_key="datasource.id")
     title: str
-    natural_language_query: str
-    generated_sql: str
-    chart_type: str # bar, line, table
+    natural_language_query: Optional[str] = None
+    generated_sql: Optional[str] = None
+    content: Optional[str] = None
+    chart_type: str # bar, line, table, text
     layout: Any = Field(sa_column=Column(JSON)) # {x, y, w, h}
     chart_config: Optional[Any] = Field(default=None, sa_column=Column(JSON)) # x-axis, y-axis config
     created_at: datetime = Field(default_factory=datetime.utcnow)

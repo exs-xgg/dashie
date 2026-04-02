@@ -43,12 +43,14 @@ erDiagram
     DashboardPanel {
         uuid id PK
         uuid dashboard_id FK
-        uuid data_source_id FK
+        uuid data_source_id FK "Optional"
         string title
-        string natural_language_query
-        string generated_sql
+        string natural_language_query "Optional"
+        string generated_sql "Optional"
+        string content "Optional"
         string chart_type
         json layout
+        json chart_config "Optional"
         datetime created_at
         datetime updated_at
     }

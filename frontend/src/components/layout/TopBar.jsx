@@ -114,12 +114,6 @@ export default function TopBar() {
               >
                 <Settings className="w-4 h-4" />
               </button>
-              <button 
-                onClick={() => setAddChartModalOpen(true)}
-                className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold rounded hover:bg-zinc-800 transition-all active:scale-95 shadow-md shadow-zinc-950/10"
-              >
-                Add Chart
-              </button>
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Code, BarChart2 } from 'lucide-react';
+import { X, Save, AlertCircle, Code, BarChart2, Type, Layout } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function EditPanelModal({ panel, isOpen, onClose }) {
@@ -17,11 +17,30 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
       setFormData({
         title: panel.title || '',
         generated_sql: panel.generated_sql || '',
-        chart_type: panel.chart_type || ''
+        chart_type: panel.chart_type || '',
+        content: panel.content || ''
       });
     }
   }, [panel, isOpen]);
 
+  const insertMarkdown = (before, after) => {
+    const textarea = document.getElementById('markdown-editor');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content;
+    const selection = text.substring(start, end);
+    const newText = text.substring(0, start) + before + selection + after + text.substring(end);
+
+    setFormData({ ...formData, content: newText });
+
+    // Re-focus and set selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
   if (!isOpen || !panel) return null;
 
   const handleSave = async () => {
@@ -49,11 +68,15 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
         <div className="flex justify-between items-center p-6 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-secondary/10 rounded-lg text-secondary">
-               <Code className="w-5 h-5" />
+               {formData.chart_type === 'text' ? <Type className="w-5 h-5" /> : <Code className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Edit Chart Configuration</h2>
-              <p className="text-xs text-zinc-500 font-medium">Modify query, title or visualization type</p>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                {formData.chart_type === 'text' ? 'Edit Text Panel' : 'Edit Chart Configuration'}
+              </h2>
+              <p className="text-xs text-zinc-500 font-medium">
+                {formData.chart_type === 'text' ? 'Modify the text content' : 'Modify query, title or visualization type'}
+              </p>
             </div>
           </div>
           <button 
@@ -67,7 +90,7 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
         <div className="p-6 flex flex-col gap-6 overflow-y-auto">
           {/* Title Input */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Chart Title</label>
+            <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Panel Title (Internal)</label>
             <input
               type="text"
               value={formData.title}
@@ -76,43 +99,106 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
             />
           </div>
 
-          {/* Chart Type Selection */}
-          <div className="flex flex-col gap-2">
-             <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-               <BarChart2 className="w-4 h-4 text-secondary" />
-               Visualization Type
-             </label>
-             <select
-               value={formData.chart_type}
-               onChange={(e) => setFormData({ ...formData, chart_type: e.target.value })}
-               className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary"
-             >
-               <option value="bar">Bar Chart</option>
-               <option value="line">Line Chart</option>
-               <option value="area">Area Chart</option>
-               <option value="pie">Pie Chart</option>
-               <option value="table">Table / Text Data</option>
-             </select>
-          </div>
-
-          {/* SQL Editor */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">SQL Query</label>
-            <div className="relative">
-              <textarea
-                value={formData.generated_sql}
-                onChange={(e) => setFormData({ ...formData, generated_sql: e.target.value })}
-                className="w-full h-48 bg-zinc-900 text-zinc-100 font-mono text-xs p-4 rounded-xl resize-none outline-none focus:ring-2 focus:ring-secondary/50"
-                spellCheck="false"
-              />
-              <div className="absolute top-3 right-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest pointer-events-none">
-                SQL EDITOR
+          {formData.chart_type === 'text' ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <Type className="w-4 h-4 text-secondary" />
+                  Markdown Content
+                </label>
+                {/* Markdown Toolbar */}
+                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdown('**', '**')}
+                    className="p-1 px-2 text-[10px] font-bold hover:bg-white dark:hover:bg-zinc-900 rounded transition-all"
+                    title="Bold"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdown('*', '*')}
+                    className="p-1 px-2 text-[10px] font-italic hover:bg-white dark:hover:bg-zinc-900 rounded transition-all italic"
+                    title="Italic"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdown('# ', '')}
+                    className="p-1 px-2 text-[10px] font-bold hover:bg-white dark:hover:bg-zinc-900 rounded transition-all"
+                    title="Heading"
+                  >
+                    H
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdown('- ', '')}
+                    className="p-1 px-2 text-[10px] font-bold hover:bg-white dark:hover:bg-zinc-900 rounded transition-all"
+                    title="Bullet List"
+                  >
+                    List
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertMarkdown('[', '](url)')}
+                    className="p-1 px-2 text-[10px] font-bold hover:bg-white dark:hover:bg-zinc-900 rounded transition-all"
+                    title="Link"
+                  >
+                    Link
+                  </button>
+                </div>
               </div>
+              <textarea
+                id="markdown-editor"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                className="w-full h-64 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary font-mono"
+                placeholder="Enter markdown here..."
+              />
             </div>
-            <p className="text-[10px] text-zinc-500 italic">
-              Use <code className="text-secondary font-bold">{"{{date_filter:table.column}}"}</code> to automatically apply global date range filters.
-            </p>
-          </div>
+          ) : (
+            <>
+              {/* Chart Type Selection */}
+              <div className="flex flex-col gap-2">
+                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                   <BarChart2 className="w-4 h-4 text-secondary" />
+                   Visualization Type
+                 </label>
+                 <select
+                   value={formData.chart_type}
+                   onChange={(e) => setFormData({ ...formData, chart_type: e.target.value })}
+                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary"
+                 >
+                   <option value="bar">Bar Chart</option>
+                   <option value="line">Line Chart</option>
+                   <option value="area">Area Chart</option>
+                   <option value="pie">Pie Chart</option>
+                   <option value="table">Table / Text Data</option>
+                 </select>
+              </div>
+
+              {/* SQL Editor */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">SQL Query</label>
+                <div className="relative">
+                  <textarea
+                    value={formData.generated_sql}
+                    onChange={(e) => setFormData({ ...formData, generated_sql: e.target.value })}
+                    className="w-full h-48 bg-zinc-900 text-zinc-100 font-mono text-xs p-4 rounded-xl resize-none outline-none focus:ring-2 focus:ring-secondary/50"
+                    spellCheck="false"
+                  />
+                  <div className="absolute top-3 right-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest pointer-events-none">
+                    SQL EDITOR
+                  </div>
+                </div>
+                <p className="text-[10px] text-zinc-500 italic">
+                  Use <code className="text-secondary font-bold">{"{{date_filter:table.column}}"}</code> to automatically apply global date range filters.
+                </p>
+              </div>
+            </>
+          )}
 
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium flex items-center gap-2 border border-red-100 dark:border-red-900/30">

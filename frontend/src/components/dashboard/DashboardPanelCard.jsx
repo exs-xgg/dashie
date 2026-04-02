@@ -7,6 +7,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function DashboardPanelCard({ panel, onDelete }) {
   const { executePanelQuery, fixPanel, dateRange, setEditingPanel, isEditMode } = useStore();
@@ -16,6 +18,10 @@ export default function DashboardPanelCard({ panel, onDelete }) {
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
+    if (panel.chart_type === 'text') {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -47,17 +53,23 @@ export default function DashboardPanelCard({ panel, onDelete }) {
 
   useEffect(() => {
     fetchData();
-  }, [panel.generated_sql, panel.data_source_id, dateRange]);
+  }, [panel.generated_sql, panel.data_source_id, dateRange, panel.chart_type]);
+
+  const isTitleCard = panel.chart_type === 'text' && panel.chart_config?.text_type === 'title';
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col h-full group">
-      <div className={`flex justify-between items-start mb-4 ${isEditMode ? 'drag-handle cursor-move' : ''}`}>
-        <div>
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{panel.title}</h3>
-          <p className="text-xs text-zinc-500 font-medium truncate max-w-sm" title={panel.natural_language_query}>
-            {panel.natural_language_query}
-          </p>
-        </div>
+    <div className={`bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col h-full group transition-all relative ${panel.chart_type === 'text' ? 'p-4' : 'p-6'}`}>
+      <div className={`${panel.chart_type === 'text' ? 'absolute top-1 right-1 z-20' : 'flex justify-between items-start mb-4'} ${isEditMode ? 'drag-handle cursor-move' : ''}`}>
+        {!isTitleCard && (
+          <div>
+            <h3 className="text-zinc-900 dark:text-zinc-50 text-sm font-bold">{panel.title}</h3>
+            {panel.chart_type !== 'text' && (
+              <p className="text-xs text-zinc-500 font-medium truncate max-w-sm" title={panel.natural_language_query}>
+                {panel.natural_language_query}
+              </p>
+            )}
+          </div>
+        )}
         <div 
           className={`flex items-center gap-1 transition-opacity ${isEditMode ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 hover:opacity-100'}`}
           onMouseDown={(e) => e.stopPropagation()}
@@ -103,19 +115,25 @@ export default function DashboardPanelCard({ panel, onDelete }) {
           </div>
         )}
 
-        {!loading && !error && data && data.length === 0 && (
-           <div className="h-full flex items-center justify-center">
-             <p className="text-sm text-zinc-500">No data returned</p>
-           </div>
-        )}
-
-        {!loading && !error && data && data.length > 0 && (
+        {!loading && !error && (
           <div className="h-full w-full">
-            {panel.chart_type === 'bar' && <BarChartRenderer data={data} />}
-            {panel.chart_type === 'line' && <LineChartRenderer data={data} />}
-            {panel.chart_type === 'area' && <AreaChartRenderer data={data} />}
-            {panel.chart_type === 'pie' && <PieChartRenderer data={data} />}
-            {panel.chart_type === 'table' && <TableRenderer data={data} />}
+            {panel.chart_type === 'text' ? (
+              <TextRenderer content={panel.content} config={panel.chart_config} />
+            ) : (
+              data && data.length > 0 ? (
+                <>
+                  {panel.chart_type === 'bar' && <BarChartRenderer data={data} />}
+                  {panel.chart_type === 'line' && <LineChartRenderer data={data} />}
+                  {panel.chart_type === 'area' && <AreaChartRenderer data={data} />}
+                  {panel.chart_type === 'pie' && <PieChartRenderer data={data} />}
+                  {panel.chart_type === 'table' && <TableRenderer data={data} />}
+                </>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-sm text-zinc-500">No data returned</p>
+                </div>
+              )
+            )}
           </div>
         )}
       </div>
@@ -266,5 +284,18 @@ function PieChartRenderer({ data }) {
         />
       </PieChart>
     </ResponsiveContainer>
+  );
+}
+
+function TextRenderer({ content, config }) {
+  const isTitle = config?.text_type === 'title';
+  return (
+    <div className={`h-full w-full flex ${isTitle ? 'items-start' : 'items-center'} justify-start`}>
+      <div className={`w-full prose dark:prose-invert max-w-none ${isTitle ? 'text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50' : 'text-sm text-zinc-500 dark:text-zinc-400 font-medium'}`}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {content}
+        </ReactMarkdown>
+      </div>
+    </div>
   );
 }

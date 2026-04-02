@@ -4,6 +4,7 @@ import AddChartModal from '../components/dashboard/AddChartModal';
 import EditPanelModal from '../components/dashboard/EditPanelModal';
 import DashboardPanelCard from '../components/dashboard/DashboardPanelCard';
 import DashboardSettingsModal from '../components/dashboard/DashboardSettingsModal';
+import FloatingToolbar from '../components/dashboard/FloatingToolbar';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -59,6 +60,13 @@ export default function DashboardPage() {
       />
       <DashboardSettingsModal />
       
+      {isEditMode && (
+        <div className="flex justify-end mb-4 sticky top-[4.5rem] z-30 pointer-events-none">
+          <div className="pointer-events-auto">
+            <FloatingToolbar />
+          </div>
+        </div>
+      )}
 
       {panels.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
