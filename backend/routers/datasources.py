@@ -43,6 +43,19 @@ async def create_datasource(payload: DataSourceCreate, session: Session = Depend
 async def list_datasources(session: Session = Depends(get_session)):
     return session.exec(select(DataSource)).all()
 
+@router.delete("/{datasource_id}")
+async def delete_datasource(datasource_id: uuid.UUID, session: Session = Depends(get_session)):
+    datasource = session.get(DataSource, datasource_id)
+    if not datasource:
+        raise HTTPException(status_code=404, detail="Data source not found")
+    # Cascade-delete related schema manifests
+    manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
+    for m in manifests:
+        session.delete(m)
+    session.delete(datasource)
+    session.commit()
+    return {"status": "deleted", "id": str(datasource_id)}
+
 @router.post("/{datasource_id}/scan")
 async def scan_datasource(datasource_id: uuid.UUID, session: Session = Depends(get_session)):
     datasource = session.get(DataSource, datasource_id)

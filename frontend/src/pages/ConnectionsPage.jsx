@@ -4,7 +4,7 @@ import useStore from '../stores/useStore';
 import { format } from 'date-fns';
 
 export default function ConnectionsPage() {
-  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection } = useStore();
+  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, deleteDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection } = useStore();
   const [activeTab, setActiveTab] = useState('databases'); // databases, mcp
   const [isDBModalOpen, setIsDBModalOpen] = useState(false);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
@@ -40,8 +40,7 @@ export default function ConnectionsPage() {
     if (deleteConfirm.type === 'mcp') {
         await deleteMCPConnection(deleteConfirm.id);
     } else {
-        // We'll add deleteDataSource to store if needed, let's assume we mainly edit for now
-        // alert("DataSource deletion coming soon");
+        await deleteDataSource(deleteConfirm.id);
     }
     setDeleteConfirm(null);
   };
@@ -166,9 +165,22 @@ export default function ConnectionsPage() {
                        </span>
                     </td>
                     <td className="px-6 py-5 text-right">
-                       <button className="p-1.5 text-zinc-400 hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">
-                          <Edit2 className="w-4 h-4" />
-                       </button>
+                       <div className="flex items-center justify-end gap-1">
+                         <button
+                           onClick={(e) => { e.stopPropagation(); handleOpenDBModal(ds); }}
+                           className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 transition-all"
+                           title="Edit"
+                         >
+                           <Edit2 className="w-4 h-4" />
+                         </button>
+                         <button
+                           onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: 'db', id: ds.id }); }}
+                           className="p-1.5 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                           title="Delete"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
+                       </div>
                     </td>
                   </tr>
                 ))}
@@ -423,13 +435,22 @@ export default function ConnectionsPage() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
           <div className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-xl font-bold mb-4">Disconnect Server?</h3>
-            <p className="text-zinc-500 mb-8">dashie will lose access to the context provided by this server. This cannot be undone.</p>
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 rounded-full flex items-center justify-center mb-6">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">
+              {deleteConfirm.type === 'db' ? 'Remove Database?' : 'Disconnect Server?'}
+            </h3>
+            <p className="text-zinc-500 mb-8">
+              {deleteConfirm.type === 'db'
+                ? 'This database connection and all its schema metadata will be permanently removed. This cannot be undone.'
+                : 'dashie will lose access to the context provided by this server. This cannot be undone.'}
+            </p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 font-bold text-zinc-500 hover:text-zinc-700">Cancel</button>
               <button 
                 onClick={handleDelete}
-                className="flex-1 bg-error text-white py-3 rounded-xl font-bold shadow-lg shadow-error/20"
+                className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-colors"
               >
                 Delete
               </button>

@@ -77,6 +77,15 @@ const useStore = create((set, get) => ({
     }
   },
 
+  deleteDataSource: async (id) => {
+    try {
+      await axios.delete(`/api/datasources/${id}`);
+      set((state) => ({ datasources: state.datasources.filter(d => d.id !== id) }));
+    } catch (err) {
+      console.error("Failed to delete datasource:", err);
+    }
+  },
+
   testConnection: async (data) => {
     try {
       const res = await axios.post('/api/datasources/test-connection', data);
