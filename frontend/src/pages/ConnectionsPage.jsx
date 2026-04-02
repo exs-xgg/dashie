@@ -304,7 +304,24 @@ export default function ConnectionsPage() {
                         <h2 className="text-2xl font-bold">{dbModalTab === 'editor' ? 'Database Access Editor' : 'Schema Inspector'}</h2>
                         <p className="text-zinc-500 text-sm">{dbModalTab === 'editor' ? 'Provision credentials for dashie.' : 'Review synchronized tables and columns.'}</p>
                     </div>
-                    <button type="button" onClick={() => setIsDBModalOpen(false)} className="p-2 text-zinc-400 hover:bg-zinc-100 rounded-full"><X className="w-5 h-5"/></button>
+                    <div className="flex items-center gap-3">
+                        {dbModalTab === 'schema' && editingItem?.id && (
+                           <button
+                             type="button"
+                             onClick={async (e) => {
+                                 e.preventDefault();
+                                 await handleSyncSchema(editingItem.id);
+                                 fetchDataSourceSchema(editingItem.id);
+                             }}
+                             disabled={syncingId === editingItem.id}
+                             className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                           >
+                             <RefreshCw className={`w-3.5 h-3.5 ${syncingId === editingItem.id ? 'animate-spin text-blue-500' : ''}`} />
+                             Sync Now
+                           </button>
+                        )}
+                        <button type="button" onClick={() => setIsDBModalOpen(false)} className="p-2 text-zinc-400 hover:bg-zinc-100 rounded-full"><X className="w-5 h-5"/></button>
+                    </div>
                   </div>
 
                   {dbModalTab === 'editor' ? (
@@ -438,7 +455,19 @@ export default function ConnectionsPage() {
                                  <div className="text-center py-10 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
                                      <Database className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
                                      <h3 className="text-sm font-bold text-zinc-600 dark:text-zinc-400">No tables synchronized</h3>
-                                     <p className="text-xs text-zinc-400 mt-1">Please sync the schema from the connections list outside the editor.</p>
+                                     <p className="text-xs text-zinc-400 mt-1 mb-6">Synchronize the database to explore schemas.</p>
+                                     <button
+                                         type="button"
+                                         onClick={async () => {
+                                             await handleSyncSchema(editingItem.id);
+                                             fetchDataSourceSchema(editingItem.id);
+                                         }}
+                                         disabled={syncingId === editingItem.id}
+                                         className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all mx-auto disabled:opacity-50 uppercase tracking-tighter"
+                                     >
+                                         <RefreshCw className={`w-3.5 h-3.5 ${syncingId === editingItem.id ? 'animate-spin' : ''}`} />
+                                         Sync Schema Now
+                                     </button>
                                  </div>
                              )
                          ) : (
