@@ -12,6 +12,7 @@ const useStore = create((set, get) => ({
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
   },
+  activeSchema: null,
   
   // Actions
   fetchDataSources: async () => {
@@ -104,6 +105,18 @@ const useStore = create((set, get) => ({
       return res.data;
     } catch (err) {
       console.error("Failed to sync datasource schema:", err);
+      throw err;
+    }
+  },
+
+  fetchDataSourceSchema: async (id) => {
+    try {
+      set({ activeSchema: null });
+      const res = await axios.get(`/api/datasources/${id}/schema`);
+      set({ activeSchema: res.data });
+      return res.data;
+    } catch (err) {
+      console.error("Failed to fetch schema:", err);
       throw err;
     }
   },

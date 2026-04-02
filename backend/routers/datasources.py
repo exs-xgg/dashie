@@ -62,15 +62,19 @@ async def scan_datasource(datasource_id: uuid.UUID, session: Session = Depends(g
     if not datasource:
         raise HTTPException(status_code=404, detail="Data source not found")
         
-    # Build connection URI: postgresql://user:pass@host:port/database
-    uri = f"postgresql://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
+    config = {
+        "db_type": datasource.db_type,
+        "user": datasource.user,
+        "password": datasource.encrypted_password,
+        "host": datasource.host,
+        "port": datasource.port,
+        "database": datasource.database
+    }
     
-    # Run the agentic scan
-    raw_scan_result = await agent_service.scan_schema(str(datasource_id), uri)
-    
-    import json
     try:
-        data = json.loads(raw_scan_result)
+        # Run standard DB schema introspection
+        data = database_service.introspect_schema(config)
+        
         # Clean current manifests for this datasource
         old_manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
         for m in old_manifests:
@@ -90,16 +94,24 @@ async def scan_datasource(datasource_id: uuid.UUID, session: Session = Depends(g
         session.commit()
         return {"status": "success", "message": f"Synced {len(data)} tables"}
         
-    except json.JSONDecodeError:
-        # Fallback if the AI gives unstructured resp
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # Fallback if there's a problem during sync
+        raw_error = str(e)
         manifest = SchemaManifest(
             data_source_id=datasource_id,
-            table_name="full_schema_raw",
+            table_name="sync_error",
             columns=[],
             sample_rows=[],
-            ai_notes=raw_scan_result,
+            ai_notes=f"Failed to sync: {raw_error}",
             last_scanned_at=datetime.utcnow()
         )
         session.add(manifest)
         session.commit()
-        return {"status": "partial_success", "message": "Stored raw notes, could not parse structure."}
+        return {"status": "error", "message": f"Failed to sync schema: {raw_error}"}
+
+@router.get("/{datasource_id}/schema")
+async def get_datasource_schema(datasource_id: uuid.UUID, session: Session = Depends(get_session)):
+    manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
+    return manifests

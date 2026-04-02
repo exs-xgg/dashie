@@ -4,10 +4,11 @@ import useStore from '../stores/useStore';
 import { format } from 'date-fns';
 
 export default function ConnectionsPage() {
-  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, deleteDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection, syncDataSourceSchema } = useStore();
+  const { datasources, mcpConnections, fetchDataSources, fetchMCPConnections, createDataSource, deleteDataSource, createMCPConnection, updateMCPConnection, deleteMCPConnection, testConnection, syncDataSourceSchema, fetchDataSourceSchema, activeSchema } = useStore();
   const [activeTab, setActiveTab] = useState('databases'); // databases, mcp
   const [isDBModalOpen, setIsDBModalOpen] = useState(false);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
+  const [dbModalTab, setDbModalTab] = useState('editor'); // editor, schema
   const [editingItem, setEditingItem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'db'|'mcp', id: string }
   const [isTesting, setIsTesting] = useState(false);
@@ -20,6 +21,7 @@ export default function ConnectionsPage() {
   }, []);
 
   const handleOpenDBModal = (item = null) => {
+    setDbModalTab('editor');
     if (item) {
         setEditingItem({
             ...item,
@@ -263,23 +265,30 @@ export default function ConnectionsPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
           <div className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
             <form onSubmit={handleSaveDB} className="flex">
-               {/* Sidebar of the modal */}
                <div className="w-48 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-8 space-y-6">
                   <div className="space-y-4">
-                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Protocol</p>
-                     {['postgresql', 'mysql', 'mongodb'].map(type => (
-                        <button 
-                          key={type}
-                          type="button"
-                          onClick={() => {
-                            const ports = { postgresql: '5432', mysql: '3306', mongodb: '27017' };
-                            setEditingItem({...editingItem, db_type: type, port: ports[type]});
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded text-xs font-bold transition-all uppercase tracking-tighter ${editingItem.db_type === type ? 'bg-secondary text-white' : 'text-zinc-500 hover:bg-zinc-200/50'}`}
-                        >
-                           {type}
-                        </button>
-                     ))}
+                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Navigation</p>
+                     <button 
+                       type="button"
+                       onClick={() => setDbModalTab('editor')}
+                       className={`w-full text-left px-3 py-2 rounded text-xs font-bold transition-all uppercase tracking-tighter ${dbModalTab === 'editor' ? 'bg-secondary text-white' : 'text-zinc-500 hover:bg-zinc-200/50'}`}
+                     >
+                        Database Access
+                     </button>
+                     <button 
+                       type="button"
+                       onClick={() => {
+                          setDbModalTab('schema');
+                          if (editingItem?.id) {
+                              fetchDataSourceSchema(editingItem.id);
+                          }
+                       }}
+                       className={`w-full text-left px-3 py-2 rounded text-xs font-bold transition-all uppercase tracking-tighter flex justify-between items-center ${dbModalTab === 'schema' ? 'bg-secondary text-white' : 'text-zinc-500 hover:bg-zinc-200/50'}`}
+                       disabled={!editingItem?.id}
+                     >
+                        <span>Schema</span>
+                        {!editingItem?.id && <Lock className="w-3 h-3 opacity-50" />}
+                     </button>
                   </div>
                   <div className="pt-8 space-y-4">
                     <div className="flex items-center gap-2 text-zinc-400">
@@ -289,101 +298,156 @@ export default function ConnectionsPage() {
                   </div>
                </div>
 
-               <div className="flex-1 p-10 space-y-8">
+               <div className="flex-1 p-10 space-y-8 max-h-[85vh] overflow-y-auto w-full min-w-0">
                   <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-2xl font-bold">Database Access</h2>
-                        <p className="text-zinc-500 text-sm">Provision credentials for dashie.</p>
+                        <h2 className="text-2xl font-bold">{dbModalTab === 'editor' ? 'Database Access Editor' : 'Schema Inspector'}</h2>
+                        <p className="text-zinc-500 text-sm">{dbModalTab === 'editor' ? 'Provision credentials for dashie.' : 'Review synchronized tables and columns.'}</p>
                     </div>
                     <button type="button" onClick={() => setIsDBModalOpen(false)} className="p-2 text-zinc-400 hover:bg-zinc-100 rounded-full"><X className="w-5 h-5"/></button>
                   </div>
 
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <Input 
-                            label="Connection Name" 
-                            id="conn_name"
-                            name="name"
-                            placeholder="Production Read-Only" 
-                            value={editingItem.name}
-                            onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
-                        />
-                        <Input 
-                            label="Host" 
-                            id="conn_host"
-                            name="host"
-                            placeholder="db.example.com" 
-                            value={editingItem.host}
-                            onChange={(e) => setEditingItem({...editingItem, host: e.target.value})}
-                        />
-                    </div>
-                    <div className="grid grid-cols-3 gap-6">
-                        <Input 
-                            label="Port" 
-                            id="conn_port"
-                            name="port"
-                            value={editingItem.port}
-                            onChange={(e) => setEditingItem({...editingItem, port: e.target.value})}
-                        />
-                        <div className="col-span-2">
-                            <Input 
-                                label="Database Name" 
-                                id="conn_database"
-                                name="database"
-                                value={editingItem.database}
-                                onChange={(e) => setEditingItem({...editingItem, database: e.target.value})}
-                            />
+                  {dbModalTab === 'editor' ? (
+                     <>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.1em] cursor-pointer">Protocol</label>
+                                <select 
+                                   value={editingItem.db_type}
+                                   onChange={e => {
+                                      const type = e.target.value;
+                                      const ports = { postgresql: '5432', mysql: '3306', mongodb: '27017' };
+                                      setEditingItem({...editingItem, db_type: type, port: ports[type]});
+                                   }}
+                                   className="w-full bg-zinc-50 dark:bg-zinc-900 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-secondary/20 text-zinc-900 dark:text-zinc-50 text-sm font-medium transition-all"
+                                >
+                                   <option value="postgresql">PostgreSQL</option>
+                                   <option value="mysql">MySQL</option>
+                                   <option value="mongodb">MongoDB</option>
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6">
+                                <Input 
+                                    label="Connection Name" 
+                                    id="conn_name"
+                                    name="name"
+                                    placeholder="Production Read-Only" 
+                                    value={editingItem.name}
+                                    onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
+                                />
+                                <Input 
+                                    label="Host" 
+                                    id="conn_host"
+                                    name="host"
+                                    placeholder="db.example.com" 
+                                    value={editingItem.host}
+                                    onChange={(e) => setEditingItem({...editingItem, host: e.target.value})}
+                                />
+                            </div>
+                            <div className="grid grid-cols-3 gap-6">
+                                <Input 
+                                    label="Port" 
+                                    id="conn_port"
+                                    name="port"
+                                    value={editingItem.port}
+                                    onChange={(e) => setEditingItem({...editingItem, port: e.target.value})}
+                                />
+                                <div className="col-span-2">
+                                    <Input 
+                                        label="Database Name" 
+                                        id="conn_database"
+                                        name="database"
+                                        value={editingItem.database}
+                                        onChange={(e) => setEditingItem({...editingItem, database: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                                <Input 
+                                    label="User" 
+                                    id="conn_user"
+                                    name="user"
+                                    value={editingItem.user}
+                                    onChange={(e) => setEditingItem({...editingItem, user: e.target.value})}
+                                />
+                                <Input 
+                                    label="Password" 
+                                    id="conn_password"
+                                    name="password"
+                                    type="password" 
+                                    value={editingItem.password}
+                                    onChange={(e) => setEditingItem({...editingItem, password: e.target.value})}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                        <Input 
-                            label="User" 
-                            id="conn_user"
-                            name="user"
-                            value={editingItem.user}
-                            onChange={(e) => setEditingItem({...editingItem, user: e.target.value})}
-                        />
-                        <Input 
-                            label="Password" 
-                            id="conn_password"
-                            name="password"
-                            type="password" 
-                            value={editingItem.password}
-                            onChange={(e) => setEditingItem({...editingItem, password: e.target.value})}
-                        />
-                    </div>
-                  </div>
 
-                    <div className="flex flex-col gap-4 pt-6">
-                    {testResult && (
-                        <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-3 ${testResult.status === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'}`}>
-                            {testResult.status === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-                            {testResult.message}
+                        <div className="flex flex-col gap-4 pt-6">
+                            {testResult && (
+                                <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-3 ${testResult.status === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'}`}>
+                                    {testResult.status === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                                    {testResult.message}
+                                </div>
+                            )}
+                            <div className="flex gap-4">
+                                <button 
+                                    type="button"
+                                    disabled={isTesting}
+                                    onClick={handleTestConnection}
+                                    className="flex-1 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold rounded-xl text-sm hover:bg-zinc-50 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isTesting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                                            Testing...
+                                        </>
+                                    ) : "Test Connection"}
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isTesting}
+                                    className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3 rounded-xl font-bold text-sm shadow-xl disabled:opacity-50"
+                                >
+                                    Save Configuration
+                                </button>
+                            </div>
                         </div>
-                    )}
-                    <div className="flex gap-4">
-                        <button 
-                            type="button"
-                            disabled={isTesting}
-                            onClick={handleTestConnection}
-                            className="flex-1 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold rounded-xl text-sm hover:bg-zinc-50 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isTesting ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
-                                    Testing...
-                                </>
-                            ) : "Test Connection"}
-                        </button>
-                        <button 
-                            type="submit"
-                            disabled={isTesting}
-                            className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3 rounded-xl font-bold text-sm shadow-xl disabled:opacity-50"
-                        >
-                            Save Configuration
-                        </button>
-                    </div>
-                  </div>
+                     </>
+                  ) : (
+                     <div className="space-y-6">
+                         {activeSchema ? (
+                             activeSchema.length > 0 ? (
+                                 <div className="space-y-4">
+                                     {activeSchema.map((manifest) => (
+                                         <div key={manifest.id} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                                             <div className="bg-zinc-50 dark:bg-zinc-900 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 font-mono text-sm font-bold flex justify-between items-center">
+                                                 <span>{manifest.table_name}</span>
+                                                 <span className="text-[10px] font-normal text-zinc-400 uppercase tracking-widest">{manifest.columns?.length || 0} columns</span>
+                                             </div>
+                                             <div className="p-4 grid grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-4">
+                                                 {manifest.columns?.map((col, idx) => (
+                                                     <div key={idx} className="flex flex-col">
+                                                         <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 truncate" title={col.name}>{col.name}</span>
+                                                         <span className="text-[10px] text-zinc-400 font-mono truncate">{col.type} {col.is_primary ? '(PK)' : ''}</span>
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         </div>
+                                     ))}
+                                 </div>
+                             ) : (
+                                 <div className="text-center py-10 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                                     <Database className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                                     <h3 className="text-sm font-bold text-zinc-600 dark:text-zinc-400">No tables synchronized</h3>
+                                     <p className="text-xs text-zinc-400 mt-1">Please sync the schema from the connections list outside the editor.</p>
+                                 </div>
+                             )
+                         ) : (
+                             <div className="flex justify-center items-center py-12">
+                                <div className="w-6 h-6 border-2 border-secondary border-t-transparent rounded-full animate-spin"></div>
+                             </div>
+                         )}
+                     </div>
+                  )}
                </div>
             </form>
           </div>
