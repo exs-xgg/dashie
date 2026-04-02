@@ -73,6 +73,23 @@ const useStore = create((set, get) => ({
        console.error("Failed to delete panel:", err);
      }
   },
+  
+  fixPanel: async (panelId, errorMessage) => {
+    try {
+      const res = await axios.post(`/api/query/fix`, {
+        panel_id: panelId,
+        error_message: errorMessage
+      });
+      // Update the panel in the store
+      set((state) => ({
+        panels: state.panels.map(p => p.id === panelId ? res.data : p)
+      }));
+      return res.data;
+    } catch (err) {
+      console.error("Failed to fix panel:", err);
+      throw err;
+    }
+  },
 
   executePanelQuery: async (datasourceId, sql) => {
     try {
@@ -88,9 +105,13 @@ const useStore = create((set, get) => ({
     }
   },
 
-  generateQuery: async (datasourceId, prompt) => {
+  generateQuery: async (datasourceId, prompt, chartType = null) => {
     try {
-      const res = await axios.post(`/api/query/generate?datasource_id=${datasourceId}&prompt=${encodeURIComponent(prompt)}`);
+      let url = `/api/query/generate?datasource_id=${datasourceId}&prompt=${encodeURIComponent(prompt)}`;
+      if (chartType && chartType !== 'auto') {
+         url += `&chart_type=${encodeURIComponent(chartType)}`;
+      }
+      const res = await axios.post(url);
       return res.data;
     } catch (err) {
       console.error("Failed to generate query:", err);

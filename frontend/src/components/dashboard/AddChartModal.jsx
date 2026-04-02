@@ -6,6 +6,7 @@ export default function AddChartModal() {
   const { isAddChartModalOpen, setAddChartModalOpen, datasources, generateQuery, selectedDashboardId, fetchPanels, createPanel } = useStore();
   const [prompt, setPrompt] = useState("");
   const [selectedDb, setSelectedDb] = useState("");
+  const [preferredChartType, setPreferredChartType] = useState("auto");
   
   const [isLoading, setIsLoading] = useState(false);
   const [generatedConfig, setGeneratedConfig] = useState(null);
@@ -16,6 +17,7 @@ export default function AddChartModal() {
   const handleClose = () => {
     setPrompt("");
     setSelectedDb("");
+    setPreferredChartType("auto");
     setGeneratedConfig(null);
     setError(null);
     setAddChartModalOpen(false);
@@ -27,7 +29,7 @@ export default function AddChartModal() {
     setIsLoading(true);
     setError(null);
     try {
-      const config = await generateQuery(selectedDb, prompt);
+      const config = await generateQuery(selectedDb, prompt, preferredChartType);
       setGeneratedConfig(config);
     } catch (err) {
       setError(err?.response?.data?.detail || err.message || "An error occurred while generating the chart");
@@ -91,24 +93,47 @@ export default function AddChartModal() {
         <div className="p-8 flex flex-col gap-8 overflow-y-auto">
           {!generatedConfig && !isLoading && (
             <>
-              {/* Database Selection */}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="datasource-select" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                  <Database className="w-4 h-4 text-secondary" />
-                  Select Database
-                </label>
-                <select
-                  id="datasource-select"
-                  name="datasource"
-                  value={selectedDb}
-                  onChange={(e) => setSelectedDb(e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none"
-                >
-                  <option value="" disabled>Choose a connected database...</option>
-                  {datasources.map(db => (
-                    <option key={db.id} value={db.id}>{db.name} ({db.type})</option>
-                  ))}
-                </select>
+              {/* Database & Chart Preference Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="datasource-select" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                    <Database className="w-4 h-4 text-secondary" />
+                    Select Database
+                  </label>
+                  <select
+                    id="datasource-select"
+                    name="datasource"
+                    value={selectedDb}
+                    onChange={(e) => setSelectedDb(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none"
+                  >
+                    <option value="" disabled>Choose a connected database...</option>
+                    {datasources.map(db => (
+                      <option key={db.id} value={db.id}>{db.name} ({db.type})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="chart-type-select" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                    <Search className="w-4 h-4 text-secondary" />
+                    Preferred Type
+                  </label>
+                  <select
+                    id="chart-type-select"
+                    name="chart_type"
+                    value={preferredChartType}
+                    onChange={(e) => setPreferredChartType(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none"
+                  >
+                    <option value="auto">Auto (Let AI decide)</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="area">Area Chart</option>
+                    <option value="table">Table / Text Data</option>
+                  </select>
+                </div>
               </div>
 
               {/* Natural Language Input */}

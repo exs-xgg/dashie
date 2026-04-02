@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from database import get_session
-from models.domain import DataSource, SchemaManifest, QueryHistory
+from models.domain import DataSource, SchemaManifest, QueryHistory, DashboardPanel
 from services.agent_service import agent_service
 import uuid
 import time
@@ -17,6 +17,7 @@ router = APIRouter()
 async def generate_sql_query(
     datasource_id: uuid.UUID,
     prompt: str,
+    chart_type: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     datasource = session.get(DataSource, datasource_id)
@@ -43,9 +44,8 @@ async def generate_sql_query(
     
     start_time = time.time()
     
-    # LangGraph agent call
     try:
-        data = await agent_service.run_query(str(datasource_id), uri, prompt, context)
+        data = await agent_service.run_query(str(datasource_id), uri, prompt, context, chart_type)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate query: {str(e)}")
         
@@ -64,6 +64,54 @@ async def generate_sql_query(
     session.commit()
     
     return data
+
+class FixQueryRequest(BaseModel):
+    panel_id: uuid.UUID
+    error_message: str
+
+@router.post("/fix")
+async def fix_sql_query(
+    request: FixQueryRequest,
+    session: Session = Depends(get_session)
+):
+    panel = session.get(DashboardPanel, request.panel_id)
+    if not panel:
+        raise HTTPException(status_code=404, detail="Panel not found")
+
+    datasource = session.get(DataSource, panel.data_source_id)
+    if not datasource:
+        raise HTTPException(status_code=404, detail="Data source not found")
+
+    dialect = datasource.db_type if datasource.db_type else "postgresql"
+    driver = "mysql+pymysql" if dialect == "mysql" else dialect
+    uri = f"{driver}://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
+
+    # Retrieve context
+    manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == panel.data_source_id)).all()
+    context = "\n\n".join([
+        f"Table: {m.table_name}\nColumns: " + ", ".join([f"{c.get('name')} ({c.get('type')})" for c in m.columns])
+        for m in manifests
+    ])
+
+    try:
+        data = await agent_service.fix_query(str(panel.data_source_id), uri, panel.generated_sql, request.error_message, context)
+        
+        # Update panel
+        panel.generated_sql = data["sql"]
+        panel.title = data["title"]
+        panel.chart_type = data["chart_type"]
+        panel.chart_config = {
+            "xaxis_column": data["xaxis_column"],
+            "yaxis_columns": data["yaxis_columns"]
+        }
+        panel.updated_at = datetime.utcnow()
+        session.add(panel)
+        session.commit()
+        session.refresh(panel)
+        
+        return panel
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fix query: {str(e)}")
 
 class ExecuteQueryRequest(BaseModel):
     sql: str

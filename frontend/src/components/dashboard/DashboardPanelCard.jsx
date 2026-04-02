@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useStore from '../../stores/useStore';
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Trash2, Edit3, Code2, Loader2, RefreshCw } from 'lucide-react';
+import { Trash2, Edit3, Code2, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -9,9 +9,10 @@ import {
 } from '@tanstack/react-table';
 
 export default function DashboardPanelCard({ panel, onDelete }) {
-  const { executePanelQuery } = useStore();
+  const { executePanelQuery, fixPanel } = useStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fixing, setFixing] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
@@ -28,6 +29,19 @@ export default function DashboardPanelCard({ panel, onDelete }) {
       setError(err.message || 'Error fetching panel data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFix = async () => {
+    if (!error) return;
+    try {
+      setFixing(true);
+      await fixPanel(panel.id, error);
+      // Panel data will be updated via store, which triggers re-fetch due to useEffect
+    } catch (err) {
+      setError("AI was unable to fix the query. Error: " + err.message);
+    } finally {
+      setFixing(false);
     }
   };
 
@@ -63,8 +77,25 @@ export default function DashboardPanelCard({ panel, onDelete }) {
         )}
         
         {error && !loading && (
-          <div className="h-full flex items-center justify-center p-4">
-            <p className="text-sm text-error text-center">{error}</p>
+          <div className="h-full flex flex-col items-center justify-center p-4 gap-4 text-center">
+            <p className="text-sm text-error font-medium">{error}</p>
+            <button
+              onClick={handleFix}
+              disabled={fixing}
+              className="flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-bold rounded-lg transition-all border border-secondary/20"
+            >
+              {fixing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Fixing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Fix with AI
+                </>
+              )}
+            </button>
           </div>
         )}
 

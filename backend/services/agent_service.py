@@ -22,6 +22,7 @@ class AgentState(MessagesState):
     connection_uri: str
     manifest: Optional[str] = None
     prompt: str
+    preferred_chart_type: Optional[str] = None
     chart_config: Optional[ChartConfig] = None
     retries: int = 0
     max_retries: int = 3
@@ -63,8 +64,14 @@ class AgentService:
         Your goal is to answer the user's natural language question by:
         1. Generating a query using standard {dialect} SQL syntax.
         2. ALWAYS use a `{{{{date_filter:table_name.column_name}}}}` placeholder in your WHERE clause if the user refers to a time period. Examples: `WHERE {{{{date_filter:orders.created_at}}}}` or `WHERE {{{{date_filter:users.registered_on}}}}`. Determine the correct date column from the schema.
+        IMPORTANT: If you use an alias for a table (e.g., `FROM orders o`), you MUST use the exact alias in the date_filter (e.g., `{{{{date_filter:o.created_at}}}}`).
         3. Ensuring the query is valid and matches the provided schema context.
-        
+        """
+
+        if state.get("preferred_chart_type") and state["preferred_chart_type"] != "auto":
+            system_prompt += f"\n4. The user has explicitly requested to see this data as a {state['preferred_chart_type']} chart if possible. Strongly bias towards generating a ChartConfig with chart_type='{state['preferred_chart_type']}' and structuring the SQL query appropriately to support that format.\n"
+
+        system_prompt += f"""
         Here is the schema context learned so far:
         {state.get('manifest', '')}
         """
@@ -83,8 +90,13 @@ class AgentService:
         import asyncio
         import re
         config = state["chart_config"]
-        # Replace date_filter placeholders for validation testing so it parses
-        test_sql = re.sub(r"\{\{date_filter.*?\}\}", "TRUE", config.sql)
+        # Replace date_filter placeholders with an actual evaluable condition for validation
+        def replace_for_validation(match):
+            col_name = match.group(1).strip()
+            return f"({col_name} >= '1970-01-01')"
+            
+        test_sql = re.sub(r"\{\{date_filter:(.+?)\}\}", replace_for_validation, config.sql)
+        test_sql = test_sql.replace("{{date_filter}}", "TRUE")
         
         def run_test():
             engine = create_engine(state["connection_uri"])
@@ -110,12 +122,13 @@ class AgentService:
         # Create a prebuilt ReAct agent for tool invocation
         return create_react_agent(self.llm, tools)
 
-    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str) -> Dict[str, Any]:
+    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str, preferred_chart_type: Optional[str] = None) -> Dict[str, Any]:
         final_state = await self.graph.ainvoke({
             "datasource_id": datasource_id,
             "connection_uri": connection_uri,
             "manifest": schema_context,
             "prompt": prompt,
+            "preferred_chart_type": preferred_chart_type,
             "retries": 0,
             "max_retries": 3,
             "error_message": None,
@@ -130,6 +143,22 @@ class AgentService:
             raise ValueError("Failed to generate robust query configuration")
             
         return config.model_dump()
+
+    async def fix_query(self, datasource_id: str, connection_uri: str, failing_sql: str, error_message: str, schema_context: str) -> Dict[str, Any]:
+        """
+        Specialized agent flow to fix a broken SQL query using the error message.
+        """
+        prompt = f"""The following SQL query failed with an error. Please fix it.
+Failing SQL:
+{failing_sql}
+
+Error Message:
+{error_message}
+
+Ensure the fixed query matches the schema context and provides valid columns for visualization.
+"""
+        # We can reuse run_query by passing the "Fix" prompt as the main prompt
+        return await self.run_query(datasource_id, connection_uri, prompt, schema_context)
 
     async def scan_schema(self, datasource_id: str, connection_uri: str):
         """
