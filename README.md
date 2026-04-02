@@ -208,6 +208,7 @@ See [docs/erd.md](docs/erd.md) for the full Mermaid diagram. Key entities:
 - [ ] **Dashboard sharing & export** — Generate shareable links, PDF/PNG export of dashboards
 - [ ] **Error handling & toast notifications** — Replace `console.error` with user-facing toast messages across all API calls
 - [ ] **Data source editing** — Support updating existing database connections (currently create-only)
+- [ ] **iFrame integration** — Embed dashboards and individual panels into other applications via iFrame
 
 ### 🟡 Medium Priority
 - [ ] **MySQL & MongoDB support** — Implement actual drivers beyond PostgreSQL (currently placeholder `db_type` field)
