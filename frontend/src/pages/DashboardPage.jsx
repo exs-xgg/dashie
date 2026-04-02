@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AddChartModal from '../components/dashboard/AddChartModal';
+import EditPanelModal from '../components/dashboard/EditPanelModal';
 import DashboardPanelCard from '../components/dashboard/DashboardPanelCard';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
@@ -11,7 +12,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage() {
   const { id } = useParams();
-  const { panels, fetchPanels, setSelectedDashboardId, deletePanel, saveDashboardLayout } = useStore();
+  const { panels, fetchPanels, setSelectedDashboardId, deletePanel, saveDashboardLayout, editingPanel, setEditingPanel, isEditMode } = useStore();
 
   useEffect(() => {
     if (id) {
@@ -21,7 +22,7 @@ export default function DashboardPage() {
   }, [id]);
 
   const handleLayoutChange = (newLayout) => {
-    if (!id || panels.length === 0) return;
+    if (!id || panels.length === 0 || !isEditMode) return;
 
     // Convert newLayout to backend format and only trigger update if something changed
     const updates = newLayout.map(item => ({
@@ -49,9 +50,14 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-12">
       <AddChartModal />
+      <EditPanelModal 
+        panel={editingPanel} 
+        isOpen={!!editingPanel} 
+        onClose={() => setEditingPanel(null)} 
+      />
       {panels.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
-          <p className="text-zinc-500 mb-4">No charts yet. Click "Add Chart" to get started.</p>
+          <p className="text-zinc-500 mb-4">No charts yet. {isEditMode ? 'Click "Add Chart" to get started.' : 'Switch to Edit Mode to add charts.'}</p>
         </div>
       ) : (
         <ResponsiveGridLayout
@@ -61,6 +67,8 @@ export default function DashboardPage() {
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
           rowHeight={100}
           draggableHandle=".drag-handle"
+          isDraggable={isEditMode}
+          isResizable={isEditMode}
           onDragStop={handleLayoutChange}
           onResizeStop={handleLayoutChange}
         >

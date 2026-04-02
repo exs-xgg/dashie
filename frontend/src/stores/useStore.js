@@ -8,13 +8,17 @@ const useStore = create((set, get) => ({
   panels: [],
   mcpConnections: [],
   isAddChartModalOpen: false,
+  isEditMode: false, // Default to View Only
   dateRange: {
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
   },
   activeSchema: null,
+  editingPanel: null,
   
   // Actions
+  setIsEditMode: (isEditMode) => set({ isEditMode }),
+  setEditingPanel: (panel) => set({ editingPanel: panel }),
   fetchDataSources: async () => {
     try {
       const res = await axios.get('/api/datasources');
@@ -139,6 +143,31 @@ const useStore = create((set, get) => ({
       set((state) => ({ dashboards: state.dashboards.filter(d => d.id !== id) }));
     } catch (err) {
       console.error("Failed to delete dashboard:", err);
+    }
+  },
+  
+  updateDashboard: async (id, data) => {
+    try {
+      const res = await axios.patch(`/api/dashboards/${id}`, data);
+      set((state) => ({ 
+        dashboards: state.dashboards.map(d => d.id === id ? res.data : d)
+      }));
+      return res.data;
+    } catch (err) {
+      console.error("Failed to update dashboard:", err);
+    }
+  },
+  
+  updatePanel: async (dashboardId, panelId, data) => {
+    try {
+      const res = await axios.patch(`/api/dashboards/${dashboardId}/panels/${panelId}`, data);
+      set((state) => ({
+        panels: state.panels.map(p => p.id === panelId ? res.data : p)
+      }));
+      return res.data;
+    } catch (err) {
+      console.error("Failed to update panel:", err);
+      throw err;
     }
   },
 

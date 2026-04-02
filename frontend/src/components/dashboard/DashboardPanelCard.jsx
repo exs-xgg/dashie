@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 
 export default function DashboardPanelCard({ panel, onDelete }) {
-  const { executePanelQuery, fixPanel } = useStore();
+  const { executePanelQuery, fixPanel, dateRange, setEditingPanel, isEditMode } = useStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fixing, setFixing] = useState(false);
@@ -47,11 +47,11 @@ export default function DashboardPanelCard({ panel, onDelete }) {
 
   useEffect(() => {
     fetchData();
-  }, [panel.generated_sql, panel.data_source_id]);
+  }, [panel.generated_sql, panel.data_source_id, dateRange]);
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col h-full group">
-      <div className="flex justify-between items-start mb-4 drag-handle cursor-move">
+      <div className={`flex justify-between items-start mb-4 ${isEditMode ? 'drag-handle cursor-move' : ''}`}>
         <div>
           <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{panel.title}</h3>
           <p className="text-xs text-zinc-500 font-medium truncate max-w-sm" title={panel.natural_language_query}>
@@ -59,13 +59,17 @@ export default function DashboardPanelCard({ panel, onDelete }) {
           </p>
         </div>
         <div 
-          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          className={`flex items-center gap-1 transition-opacity ${isEditMode ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 hover:opacity-100'}`}
           onMouseDown={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <button onClick={fetchData} className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><RefreshCw className="w-4 h-4" /></button>
-          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><Code2 className="w-4 h-4" /></button>
-          <button onClick={() => onDelete(panel.id)} className="p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors dark:hover:bg-zinc-800"><Trash2 className="w-4 h-4" /></button>
+          <button onClick={fetchData} title="Refresh" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><RefreshCw className="w-4 h-4" /></button>
+          {isEditMode && (
+            <>
+              <button onClick={() => setEditingPanel(panel)} title="Edit Configuration" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><Code2 className="w-4 h-4" /></button>
+              <button onClick={() => onDelete(panel.id)} title="Delete Chart" className="p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors dark:hover:bg-zinc-800"><Trash2 className="w-4 h-4" /></button>
+            </>
+          )}
         </div>
       </div>
       

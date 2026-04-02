@@ -97,6 +97,27 @@ async def delete_panel(
     session.delete(panel)
     session.commit()
     return {"status": "deleted"}
+
+@router.patch("/{dashboard_id}")
+async def update_dashboard(
+    dashboard_id: uuid.UUID,
+    dashboard_data: dict,
+    session: Session = Depends(get_session)
+):
+    dashboard = session.get(Dashboard, dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+        
+    for key, value in dashboard_data.items():
+        if hasattr(dashboard, key):
+            setattr(dashboard, key, value)
+            
+    dashboard.updated_at = datetime.utcnow()
+    session.add(dashboard)
+    session.commit()
+    session.refresh(dashboard)
+    return dashboard
+
 @router.delete("/{dashboard_id}")
 async def delete_dashboard(
     dashboard_id: uuid.UUID,
