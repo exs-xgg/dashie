@@ -238,5 +238,4 @@ See [docs/erd.md](docs/erd.md) for the full Mermaid diagram. Key entities:
 
 ## 📜 License
 
-MIT License — Copyright © 2024 dashie
-]]>
+MIT License — Copyright © 2026 dashie
