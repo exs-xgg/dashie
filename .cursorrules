@@ -1,0 +1,14 @@
+# Project Rules
+
+## Backend
+- Ensure CORS response header values are valid (no wildcards in production, strict origin matching).
+- All response headers should be thoroughly validated before being sent.
+
+## Frontend
+- Every form field element (`input`, `select`, `textarea`) MUST have a unique `id` or `name` attribute.
+- Every form field MUST be associated with a `<label>`. This should be achieved by:
+    - Nesting the field within the label, OR
+    - Using the `htmlFor` attribute on the label matching the `id` of the field.
+
+## General
+- Mandatory cleanup of test scripts/files: Any temporary scripts, experiments, or one-off test files (e.g., `temp_*.py`, `test_connection_manual.py`) must be deleted or moved to a `.gitignore`'d `debug/` folder after their purpose is served.

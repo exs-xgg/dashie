@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # Server Config
     port: int = int(os.getenv("PORT", 8000))
     debug: bool = os.getenv("DEBUG", "true").lower() == "true"
+    allowed_origins: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8000")
 
     class Config:
         case_sensitive = False

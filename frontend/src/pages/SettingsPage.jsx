@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { Database, Link, Terminal, Search, Check, Table, ChevronDown, Info, BarChart3 } from 'lucide-react';
 import axios from 'axios';
 import useStore from '../stores/useStore';
@@ -51,13 +51,13 @@ export default function SettingsPage() {
             </h3>
             <div className="bg-white dark:bg-zinc-900 p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <Input label="Host Address" value={formData.host} />
-                <Input label="Port" value={formData.port} />
+                <Input label="Host Address" id="host" name="host" value={formData.host} />
+                <Input label="Port" id="port" name="port" value={formData.port} />
               </div>
-              <Input label="Database Name" value={formData.database} />
+              <Input label="Database Name" id="database" name="database" value={formData.database} />
               <div className="grid grid-cols-2 gap-6">
-                <Input label="Username" value={formData.user} />
-                <Input label="Password" type="password" value={formData.password} />
+                <Input label="Username" id="user" name="user" value={formData.user} />
+                <Input label="Password" id="password" name="password" type="password" value={formData.password} />
               </div>
             </div>
           </section>
@@ -123,11 +123,17 @@ export default function SettingsPage() {
   );
 }
 
-function Input({ label, ...props }) {
+function Input({ label, id: customId, ...props }) {
+  const generatedId = useId();
+  const id = customId || generatedId;
+  
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label htmlFor={id} className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider cursor-pointer">
+        {label}
+      </label>
       <input 
+        id={id}
         {...props} 
         className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-secondary/20 text-zinc-900 dark:text-zinc-50 font-mono text-sm" 
       />

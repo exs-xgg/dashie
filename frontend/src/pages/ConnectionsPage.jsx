@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useId } from 'react';
 import { Database, Terminal, Plus, Search, Trash2, Edit2, Globe, Server, Check, X, Shield, Lock, Activity } from 'lucide-react';
 import useStore from '../stores/useStore';
 import { format } from 'date-fns';
@@ -270,12 +270,16 @@ export default function ConnectionsPage() {
                     <div className="grid grid-cols-2 gap-6">
                         <Input 
                             label="Connection Name" 
+                            id="conn_name"
+                            name="name"
                             placeholder="Production Read-Only" 
                             value={editingItem.name}
                             onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
                         />
                         <Input 
                             label="Host" 
+                            id="conn_host"
+                            name="host"
                             placeholder="db.example.com" 
                             value={editingItem.host}
                             onChange={(e) => setEditingItem({...editingItem, host: e.target.value})}
@@ -284,12 +288,16 @@ export default function ConnectionsPage() {
                     <div className="grid grid-cols-3 gap-6">
                         <Input 
                             label="Port" 
+                            id="conn_port"
+                            name="port"
                             value={editingItem.port}
                             onChange={(e) => setEditingItem({...editingItem, port: e.target.value})}
                         />
                         <div className="col-span-2">
                             <Input 
                                 label="Database Name" 
+                                id="conn_database"
+                                name="database"
                                 value={editingItem.database}
                                 onChange={(e) => setEditingItem({...editingItem, database: e.target.value})}
                             />
@@ -298,11 +306,15 @@ export default function ConnectionsPage() {
                     <div className="grid grid-cols-2 gap-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                         <Input 
                             label="User" 
+                            id="conn_user"
+                            name="user"
                             value={editingItem.user}
                             onChange={(e) => setEditingItem({...editingItem, user: e.target.value})}
                         />
                         <Input 
                             label="Password" 
+                            id="conn_password"
+                            name="password"
                             type="password" 
                             value={editingItem.password}
                             onChange={(e) => setEditingItem({...editingItem, password: e.target.value})}
@@ -361,12 +373,16 @@ export default function ConnectionsPage() {
              <form onSubmit={handleSaveMCP} className="space-y-6">
                 <Input 
                     label="Server Name" 
+                    id="mcp_name"
+                    name="name"
                     placeholder="Shared Context Server" 
                     value={editingItem.name}
                     onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
                 />
                 <Input 
                     label="Server URL (REST/WebSocket)" 
+                    id="mcp_url"
+                    name="server_url"
                     placeholder="https://mcp.yourdomain.com" 
                     value={editingItem.server_url}
                     onChange={(e) => setEditingItem({...editingItem, server_url: e.target.value})}
@@ -374,6 +390,8 @@ export default function ConnectionsPage() {
                 <div className="relative">
                     <Input 
                         label="API Authorization Key" 
+                        id="mcp_key"
+                        name="api_key"
                         type="password" 
                         value={editingItem.api_key}
                         onChange={(e) => setEditingItem({...editingItem, api_key: e.target.value})}
@@ -382,6 +400,8 @@ export default function ConnectionsPage() {
                 </div>
                 <Input 
                     label="Description (Semantic Hint)" 
+                    id="mcp_description"
+                    name="description"
                     value={editingItem.description}
                     onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
                 />
@@ -421,11 +441,17 @@ export default function ConnectionsPage() {
   );
 }
 
-function Input({ label, ...props }) {
+function Input({ label, id: customId, ...props }) {
+    const generatedId = useId();
+    const id = customId || generatedId;
+
     return (
       <div className="space-y-2">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.1em]">{label}</label>
+        <label htmlFor={id} className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.1em] cursor-pointer">
+            {label}
+        </label>
         <input 
+          id={id}
           {...props} 
           className="w-full bg-zinc-50 dark:bg-zinc-900 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-secondary/20 text-zinc-900 dark:text-zinc-50 text-sm font-medium transition-all" 
         />

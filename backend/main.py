@@ -2,12 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import datasources, query, dashboards, mcp_connections
 from database import create_db_and_tables
+from config import get_settings
 
-app = FastAPI(title="dashie - Dynamic Dashboard Builder")
+settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8000"],
+    allow_origins=settings.allowed_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

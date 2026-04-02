@@ -18,7 +18,10 @@ export default function QueryInput() {
         <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center pointer-events-none transition-transform duration-300 group-focus-within:scale-110">
           <Sparkles className="w-6 h-6 text-secondary" style={{ fill: 'currentColor' }} />
         </div>
+        <label htmlFor="nl-query-input" className="sr-only">Natural Language Query</label>
         <input
+          id="nl-query-input"
+          name="nl-query"
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
