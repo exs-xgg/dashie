@@ -53,6 +53,7 @@ class DashboardPanel(SQLModel, table=True):
     generated_sql: str
     chart_type: str # bar, line, table
     layout: Any = Field(sa_column=Column(JSON)) # {x, y, w, h}
+    chart_config: Optional[Any] = Field(default=None, sa_column=Column(JSON)) # x-axis, y-axis config
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

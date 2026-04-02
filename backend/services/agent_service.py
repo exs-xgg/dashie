@@ -1,25 +1,107 @@
-from typing import List, Dict, Any, Optional, TypedDict, Annotated
+from typing import List, Dict, Any, Optional, TypedDict, Annotated, Literal
+from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langchain_core.messages import SystemMessage, HumanMessage
 from services.mcp_service import mcp_service
 from config import get_settings
+from sqlalchemy import create_engine, text
 import os
+
+class ChartConfig(BaseModel):
+    sql: str = Field(description="The raw SQL query text.")
+    title: str = Field(description="A summary title for the chart/data.")
+    chart_type: Literal["bar", "line", "area", "table", "pie"] = Field(description="The type of chart to display.")
+    xaxis_column: str = Field(description="The column name to use for the X-axis.")
+    yaxis_columns: List[str] = Field(description="A list of column names to use for the Y-axis.")
 
 # State definition
 class AgentState(MessagesState):
     datasource_id: str
     connection_uri: str
-    manifest: Optional[str] = None # Stringified context for LLM
+    manifest: Optional[str] = None
+    prompt: str
+    chart_config: Optional[ChartConfig] = None
+    retries: int = 0
+    max_retries: int = 3
+    error_message: Optional[str] = None
 
 class AgentService:
     def __init__(self):
         settings = get_settings()
         self.llm = ChatGoogleGenerativeAI(
             model=settings.llm_model,
-            google_api_key=settings.google_api_key
+            google_api_key=settings.google_api_key,
+            temperature=0.0
         )
+        self.structured_llm = self.llm.with_structured_output(ChartConfig)
+        self.graph = self._build_graph()
+
+    def _build_graph(self):
+        builder = StateGraph(AgentState)
+        
+        builder.add_node("generate_sql", self._generate_sql_node)
+        builder.add_node("validate_sql", self._validate_sql_node)
+        
+        builder.add_edge(START, "generate_sql")
+        builder.add_edge("generate_sql", "validate_sql")
+        
+        def route_validation(state: AgentState):
+            if state.get("error_message") and state.get("retries", 0) < state.get("max_retries", 3):
+                return "generate_sql"
+            return END
+            
+        builder.add_conditional_edges("validate_sql", route_validation)
+        
+        return builder.compile()
+
+    async def _generate_sql_node(self, state: AgentState):
+        dialect = state['connection_uri'].split(':')[0]
+        system_prompt = f"""
+        You are a highly skilled SQL analyst for dashie.
+        Your goal is to answer the user's natural language question by:
+        1. Generating a query using standard {dialect} SQL syntax.
+        2. ALWAYS use a `{{{{date_filter:table_name.column_name}}}}` placeholder in your WHERE clause if the user refers to a time period. Examples: `WHERE {{{{date_filter:orders.created_at}}}}` or `WHERE {{{{date_filter:users.registered_on}}}}`. Determine the correct date column from the schema.
+        3. Ensuring the query is valid and matches the provided schema context.
+        
+        Here is the schema context learned so far:
+        {state.get('manifest', '')}
+        """
+
+        messages = [SystemMessage(content=system_prompt), HumanMessage(content=state['prompt'])]
+        
+        if state.get("error_message"):
+            error_msg = f"Your previous SQL query failed with this database error:\n{state['error_message']}\n\nPlease correct the SQL query and ensure column names and syntax are valid."
+            messages.append(HumanMessage(content=error_msg))
+
+        config: ChartConfig = await self.structured_llm.ainvoke(messages)
+        
+        return {"chart_config": config, "retries": state.get("retries", 0) + 1}
+        
+    async def _validate_sql_node(self, state: AgentState):
+        import asyncio
+        import re
+        config = state["chart_config"]
+        # Replace date_filter placeholders for validation testing so it parses
+        test_sql = re.sub(r"\{\{date_filter.*?\}\}", "TRUE", config.sql)
+        
+        def run_test():
+            engine = create_engine(state["connection_uri"])
+            with engine.connect() as conn:
+                conn.execute(text(test_sql))
+
+        try:
+            # We want to test but limit rows to 1 to avoid heavy queries during validation
+            if test_sql.strip().upper().startswith("SELECT"):
+                test_sql = f"SELECT * FROM ({test_sql.rstrip(';')}) AS subquery LIMIT 1"
+                
+            await asyncio.to_thread(run_test)
+            
+            # Query is valid
+            return {"error_message": None}
+        except Exception as e:
+            return {"error_message": str(e)}
 
     async def get_agent_for_datasource(self, datasource_id: str, connection_uri: str):
         # Dynamically load tools via MCP for this specific datasource
@@ -28,36 +110,26 @@ class AgentService:
         # Create a prebuilt ReAct agent for tool invocation
         return create_react_agent(self.llm, tools)
 
-    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str):
-        agent = await self.get_agent_for_datasource(datasource_id, connection_uri)
-        
-        system_prompt = f"""
-        You are a highly skilled SQL analyst for dashie.
-        Your goal is to answer the user's natural language question by:
-        1. Using available database tools to inspect schema if not provided.
-        2. Generating a query using standard PostgreSQL.
-        3. ALWAYS use a `{{{{date_filter}}}}` placeholder in your WHERE clause if the user refers to a time period (e.g., "last month", "current year").
-        4. Return a clear result JSON structure:
-           {{
-             "sql": "The raw PostgreSQL query text here...",
-             "title": "A summary title for the chart/data...",
-             "chart_type": "one of: bar, line, table"
-           }}
-        
-        Here is the schema context learned so far:
-        {schema_context}
-        """
-        
-        # In a real app we would use more robust structured outputs, but let's use the react agent loop
-        response = await agent.ainvoke({
-            "messages": [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=prompt)
-            ]
+    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str) -> Dict[str, Any]:
+        final_state = await self.graph.ainvoke({
+            "datasource_id": datasource_id,
+            "connection_uri": connection_uri,
+            "manifest": schema_context,
+            "prompt": prompt,
+            "retries": 0,
+            "max_retries": 3,
+            "error_message": None,
+            "messages": []
         })
         
-        # Return the last response from the agent
-        return response["messages"][-1].content
+        config = final_state.get("chart_config")
+        if final_state.get("error_message"):
+            raise ValueError(f"Could not generate a valid SQL query. Last DB error: {final_state.get('error_message')}")
+            
+        if not config:
+            raise ValueError("Failed to generate robust query configuration")
+            
+        return config.model_dump()
 
     async def scan_schema(self, datasource_id: str, connection_uri: str):
         """

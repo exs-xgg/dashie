@@ -2,7 +2,7 @@ import { Calendar, Edit2 } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function TopBar() {
-  const { dateRange, dashboards, selectedDashboardId, setAddChartModalOpen } = useStore();
+  const { dateRange, setDateRange, dashboards, selectedDashboardId, setAddChartModalOpen } = useStore();
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
 
   return (
@@ -17,12 +17,28 @@ export default function TopBar() {
       </div>
 
       <div className="flex items-center gap-6">
-        {/* Date Filter Pill */}
-        <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-lg gap-3 shadow-sm shadow-zinc-200/50">
+        {/* Date Filter */}
+        <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-lg gap-2 shadow-sm shadow-zinc-200/50">
+          <label htmlFor="start-date-filter" className="sr-only">Start Date</label>
           <Calendar className="w-4 h-4 text-zinc-500" />
-          <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
-             {dateRange.start} — {dateRange.end}
-          </span>
+          <input 
+            id="start-date-filter"
+            type="date"
+            name="startDate"
+            value={dateRange.start}
+            onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+            className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
+          />
+          <span className="text-zinc-400 font-medium">—</span>
+          <label htmlFor="end-date-filter" className="sr-only">End Date</label>
+          <input 
+            id="end-date-filter"
+            type="date"
+            name="endDate"
+            value={dateRange.end}
+            onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+            className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
+          />
         </div>
 
         <div className="flex items-center gap-3">

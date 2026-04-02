@@ -54,6 +54,17 @@ const useStore = create((set, get) => ({
     }
   },
 
+  createPanel: async (dashboardId, data) => {
+    try {
+      const res = await axios.post(`/api/dashboards/${dashboardId}/panels`, data);
+      set((state) => ({ panels: [...state.panels, res.data] }));
+      return res.data;
+    } catch (err) {
+      console.error("Failed to create panel:", err);
+      throw err;
+    }
+  },
+
   deletePanel: async (dashboardId, panelId) => {
      try {
        await axios.delete(`/api/dashboards/${dashboardId}/panels/${panelId}`);
@@ -73,6 +84,16 @@ const useStore = create((set, get) => ({
       return res.data;
     } catch (err) {
       console.error("Failed to execute panel query:", err);
+      throw err;
+    }
+  },
+
+  generateQuery: async (datasourceId, prompt) => {
+    try {
+      const res = await axios.post(`/api/query/generate?datasource_id=${datasourceId}&prompt=${encodeURIComponent(prompt)}`);
+      return res.data;
+    } catch (err) {
+      console.error("Failed to generate query:", err);
       throw err;
     }
   },

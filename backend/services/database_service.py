@@ -67,7 +67,8 @@ class DatabaseService:
         
         try:
             with engine.connect() as connection:
-                for table_name in inspector.get_table_names():
+                tables_and_views = inspector.get_table_names() + inspector.get_view_names()
+                for table_name in tables_and_views:
                     columns = []
                     for col in inspector.get_columns(table_name):
                         columns.append({

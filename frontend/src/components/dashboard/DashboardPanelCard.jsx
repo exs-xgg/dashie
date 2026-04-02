@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useStore from '../../stores/useStore';
-import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Trash2, Edit3, Code2, Loader2, RefreshCw } from 'lucide-react';
 import {
   flexRender,
@@ -44,7 +44,11 @@ export default function DashboardPanelCard({ panel, onDelete }) {
             {panel.natural_language_query}
           </p>
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div 
+          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <button onClick={fetchData} className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><RefreshCw className="w-4 h-4" /></button>
           <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><Code2 className="w-4 h-4" /></button>
           <button onClick={() => onDelete(panel.id)} className="p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors dark:hover:bg-zinc-800"><Trash2 className="w-4 h-4" /></button>
@@ -74,6 +78,8 @@ export default function DashboardPanelCard({ panel, onDelete }) {
           <div className="h-full w-full">
             {panel.chart_type === 'bar' && <BarChartRenderer data={data} />}
             {panel.chart_type === 'line' && <LineChartRenderer data={data} />}
+            {panel.chart_type === 'area' && <AreaChartRenderer data={data} />}
+            {panel.chart_type === 'pie' && <PieChartRenderer data={data} />}
             {panel.chart_type === 'table' && <TableRenderer data={data} />}
           </div>
         )}
@@ -166,5 +172,64 @@ function TableRenderer({ data }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function AreaChartRenderer({ data }) {
+  const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
+  const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
+  
+  if (!keys.length) return <div className="p-4 text-xs text-zinc-500">Could not determine numeric columns for Area Chart</div>;
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+        <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
+        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+        {keys.map((key, i) => (
+          <Area key={key} type="monotone" dataKey={key} fillOpacity={0.3} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} stroke={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} strokeWidth={2} />
+        ))}
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+function PieChartRenderer({ data }) {
+  const nameKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
+  const valueKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'number');
+
+  if (!valueKey) return <div className="p-4 text-xs text-zinc-500">Could not determine numeric columns for Pie Chart</div>;
+
+  const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981', '#3b82f6'];
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey={valueKey}
+          nameKey={nameKey}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={2}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip 
+          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+          itemStyle={{ color: '#18181b', fontSize: '12px', fontWeight: '500' }}
+        />
+        <Legend 
+          wrapperStyle={{ fontSize: '12px' }}
+          iconType="circle"
+        />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }

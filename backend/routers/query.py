@@ -22,34 +22,32 @@ async def generate_sql_query(
     datasource = session.get(DataSource, datasource_id)
     if not datasource:
         raise HTTPException(status_code=404, detail="Data source not found")
-        
-    uri = f"postgresql://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
+    dialect = datasource.db_type if datasource.db_type else "postgresql"
+    driver = "mysql+pymysql" if dialect == "mysql" else dialect
+    uri = f"{driver}://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
     
     # Retrieve current context (SchemaManifest)
-    manifest = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).first()
-    context = manifest.ai_notes if manifest else ""
+    manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
+    
+    context_parts = []
+    for m in manifests:
+        table_info = f"Table: {m.table_name}\n"
+        if m.columns:
+            cols_str = ", ".join([f"{c.get('name', 'unknown')} ({c.get('type', 'unknown')})" for c in m.columns])
+            table_info += f"Columns: {cols_str}\n"
+        if m.ai_notes:
+            table_info += f"Notes: {m.ai_notes}\n"
+        context_parts.append(table_info)
+        
+    context = "\n\n".join(context_parts)
     
     start_time = time.time()
     
     # LangGraph agent call
-    raw_result = await agent_service.run_query(str(datasource_id), uri, prompt, context)
-    
     try:
-        # Gemini often encloses JSON in markdown blocks
-        clean_json = raw_result.strip()
-        if "```json" in clean_json:
-            clean_json = clean_json.split("```json")[1].split("```")[0].strip()
-        elif "```" in clean_json:
-            clean_json = clean_json.split("```")[1].strip()
-            
-        data = json.loads(clean_json)
+        data = await agent_service.run_query(str(datasource_id), uri, prompt, context)
     except Exception as e:
-        # Fallback if parsing fails
-        data = {
-            "sql": raw_result,
-            "title": "Generated Query",
-            "chart_type": "table"
-        }
+        raise HTTPException(status_code=500, detail=f"Failed to generate query: {str(e)}")
         
     end_time = time.time()
     
@@ -80,14 +78,26 @@ async def execute_sql_query(
     datasource = session.get(DataSource, datasource_id)
     if not datasource:
         raise HTTPException(status_code=404, detail="Data source not found")
-        
-    uri = f"postgresql://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
+    dialect = datasource.db_type if datasource.db_type else "postgresql"
+    driver = "mysql+pymysql" if dialect == "mysql" else dialect
+    uri = f"{driver}://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
     
-    date_filter = ""
+    import re
+    final_sql = request.sql
+    
     if request.date_range:
-        date_filter = f"created_at >= '{request.date_range['start']}' AND created_at <= '{request.date_range['end']}'"
-    
-    final_sql = request.sql.replace("{{date_filter}}", date_filter if date_filter else "TRUE")
+        start = request.date_range['start']
+        end = request.date_range['end']
+        
+        def replace_date_filter(match):
+            col_name = match.group(1).strip()
+            return f"{col_name} >= '{start}' AND {col_name} <= '{end}'"
+            
+        final_sql = re.sub(r"\{\{date_filter:(.+?)\}\}", replace_date_filter, final_sql)
+        # Handle fallback for exact match without column
+        final_sql = final_sql.replace("{{date_filter}}", "TRUE")
+    else:
+        final_sql = re.sub(r"\{\{date_filter.*?\}\}", "TRUE", final_sql)
     
     try:
         engine = create_engine(uri)
