@@ -6,6 +6,8 @@ from config import get_settings
 
 settings = get_settings()
 
+app = FastAPI(title="dashie", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(","),
