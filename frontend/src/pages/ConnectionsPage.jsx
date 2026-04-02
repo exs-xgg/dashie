@@ -263,7 +263,7 @@ export default function ConnectionsPage() {
       {/* DB Connection Modal */}
       {isDBModalOpen && editingItem && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+          <div className="bg-white dark:bg-zinc-950 w-[60vw] min-w-[800px] rounded-2xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
             <form onSubmit={handleSaveDB} className="flex">
                <div className="w-48 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 p-8 space-y-6">
                   <div className="space-y-4">
