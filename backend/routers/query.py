@@ -8,6 +8,8 @@ import time
 import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from sqlalchemy import create_engine, text
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -65,11 +67,14 @@ async def generate_sql_query(
     
     return data
 
+class ExecuteQueryRequest(BaseModel):
+    sql: str
+    date_range: Optional[Dict[str, str]] = None
+
 @router.post("/execute")
 async def execute_sql_query(
     datasource_id: uuid.UUID,
-    sql: str,
-    date_range: Optional[Dict[str, str]] = None,
+    request: ExecuteQueryRequest,
     session: Session = Depends(get_session)
 ):
     datasource = session.get(DataSource, datasource_id)
@@ -78,21 +83,35 @@ async def execute_sql_query(
         
     uri = f"postgresql://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
     
-    # Simple date range replacement
-    # Real logic: replace {{date_filter}} with WHERE clause using date_range values
     date_filter = ""
-    if date_range:
-        date_filter = f"created_at >= '{date_range['start']}' AND created_at <= '{date_range['end']}'"
+    if request.date_range:
+        date_filter = f"created_at >= '{request.date_range['start']}' AND created_at <= '{request.date_range['end']}'"
     
-    final_sql = sql.replace("{{date_filter}}", date_filter if date_filter else "TRUE")
+    final_sql = request.sql.replace("{{date_filter}}", date_filter if date_filter else "TRUE")
     
-    # Execute via MCP Service (Direct tool call bypasses agent loop for execution only)
-    # We call read_query manually for performance/control
-    import subprocess
-    import json
-    
-    # Run the read_query tool manually through the npx subprocess (simpler than full mcp lifecycle for single execute)
-    # real production would use the active mcp_service.clients[datasource_id]
-    
-    # For speed of build, we proxy the call through the npx pg_mcp tool
-    return {"status": "success", "sql_executed": final_sql, "results": []} # placeholder
+    try:
+        engine = create_engine(uri)
+        with engine.connect() as conn:
+            result = conn.execute(text(final_sql))
+            columns = result.keys()
+            rows = [dict(zip(columns, row)) for row in result.fetchall()]
+            
+            # Serialize rows to handle datetime, UUIDs, etc.
+            def serialize(obj):
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+                import uuid
+                if isinstance(obj, uuid.UUID):
+                    return str(obj)
+                from decimal import Decimal
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                return obj
+            
+            serialized_rows = []
+            for row in rows:
+                serialized_rows.append({k: serialize(v) for k, v in row.items()})
+                
+        return {"status": "success", "sql_executed": final_sql, "results": serialized_rows}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Query execution failed: {str(e)}")

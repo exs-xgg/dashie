@@ -46,6 +46,37 @@ const useStore = create((set, get) => ({
     }
   },
   
+  saveDashboardLayout: async (dashboardId, layouts) => {
+    try {
+      await axios.put(`/api/dashboards/${dashboardId}/panels/layout`, { layouts });
+    } catch (err) {
+      console.error("Failed to save dashboard layout:", err);
+    }
+  },
+
+  deletePanel: async (dashboardId, panelId) => {
+     try {
+       await axios.delete(`/api/dashboards/${dashboardId}/panels/${panelId}`);
+       set((state) => ({ panels: state.panels.filter(p => p.id !== panelId) }));
+     } catch (err) {
+       console.error("Failed to delete panel:", err);
+     }
+  },
+
+  executePanelQuery: async (datasourceId, sql) => {
+    try {
+      const { dateRange } = get();
+      const res = await axios.post(`/api/query/execute?datasource_id=${datasourceId}`, {
+        sql,
+        date_range: dateRange
+      });
+      return res.data;
+    } catch (err) {
+      console.error("Failed to execute panel query:", err);
+      throw err;
+    }
+  },
+  
   setDateRange: (range) => set({ dateRange: range }),
   setSelectedDashboardId: (id) => set({ selectedDashboardId: id }),
   setAddChartModalOpen: (isOpen) => set({ isAddChartModalOpen: isOpen }),

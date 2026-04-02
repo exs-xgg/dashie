@@ -4,6 +4,15 @@ from database import get_session
 from models.domain import Dashboard, DashboardPanel
 import uuid
 from datetime import datetime
+from typing import List, Dict, Any
+from pydantic import BaseModel
+
+class PanelLayoutUpdate(BaseModel):
+    id: uuid.UUID
+    layout: Dict[str, Any]
+
+class BulkLayoutUpdate(BaseModel):
+    layouts: List[PanelLayoutUpdate]
 
 router = APIRouter()
 
@@ -53,6 +62,27 @@ async def update_panel(
     session.commit()
     session.refresh(panel)
     return panel
+
+@router.put("/{dashboard_id}/panels/layout")
+async def update_panel_layouts(
+    dashboard_id: uuid.UUID,
+    layout_update: BulkLayoutUpdate,
+    session: Session = Depends(get_session)
+):
+    # Verify dashboard exists
+    dashboard = session.get(Dashboard, dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+        
+    for item in layout_update.layouts:
+        panel = session.get(DashboardPanel, item.id)
+        if panel and panel.dashboard_id == dashboard_id:
+            panel.layout = item.layout
+            panel.updated_at = datetime.utcnow()
+            session.add(panel)
+            
+    session.commit()
+    return {"status": "success"}
 
 @router.delete("/{dashboard_id}/panels/{panel_id}")
 async def delete_panel(
