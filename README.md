@@ -14,9 +14,12 @@ Powered by Google Gemini, LangGraph, and the Model Context Protocol.
 
 ---
 
-## 📖 Overview
 
-dashie is an AI-first analytical platform that lets anyone — from analysts to executives — create interactive data dashboards by simply describing what they want to see. Under the hood, a self-correcting LangGraph agent translates natural language into validated SQL, picks the optimal chart type, and renders it in a drag-and-drop canvas.
+## 📖 Overview
+<img width="1896" height="677" alt="Screenshot 2026-04-04 at 9 35 45 PM" src="https://github.com/user-attachments/assets/1586a9f9-2b7b-49af-9776-b2ded2cdc40a" />
+<img width="1887" height="560" alt="Screenshot 2026-04-04 at 9 36 19 PM" src="https://github.com/user-attachments/assets/55df64ca-b5b8-4067-a009-5ea12f5edbce" />
+
+**dashie** is an AI-first analytical platform that lets anyone — from analysts to executives — create interactive data dashboards by simply describing what they want to see. Under the hood, a self-correcting LangGraph agent translates natural language into validated SQL, picks the optimal chart type, and renders it in a drag-and-drop canvas.
 
 ---
 
@@ -78,7 +81,7 @@ dashie is an AI-first analytical platform that lets anyone — from analysts to 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/dashie.git
+git clone https://github.com/exs-xgg/dashie.git
 cd dashie
 ```
 
