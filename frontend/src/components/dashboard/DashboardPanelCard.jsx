@@ -9,9 +9,10 @@ import {
 } from '@tanstack/react-table';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { format, parseISO, isValid, startOfWeek, getQuarter } from 'date-fns';
 
 export default function DashboardPanelCard({ panel, onDelete }) {
-  const { executePanelQuery, fixPanel, dateRange, setEditingPanel, isEditMode } = useStore();
+  const { executePanelQuery, fixPanel, dateRange, grouping, setEditingPanel, isEditMode } = useStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fixing, setFixing] = useState(false);
@@ -53,7 +54,7 @@ export default function DashboardPanelCard({ panel, onDelete }) {
 
   useEffect(() => {
     fetchData();
-  }, [panel.generated_sql, panel.data_source_id, dateRange, panel.chart_type]);
+  }, [panel.generated_sql, panel.data_source_id, dateRange, grouping, panel.chart_type]);
 
   const isTitleCard = panel.chart_type === 'text' && panel.chart_config?.text_type === 'title';
 
@@ -141,7 +142,45 @@ export default function DashboardPanelCard({ panel, onDelete }) {
   );
 }
 
+const formatDateByGrouping = (value, grouping) => {
+  if (!value) return value;
+  
+  // Try to parse the value
+  let date;
+  if (typeof value === 'string') {
+    // Check if it's already a string like "2024-Q1"
+    if (value.match(/^\d{4}-Q\d$/)) {
+      const [year, q] = value.split('-Q');
+      return `Q${q} ${year}`;
+    }
+    date = parseISO(value);
+  } else if (value instanceof Date) {
+    date = value;
+  } else {
+    return value;
+  }
+
+  if (!isValid(date)) return value;
+
+  switch (grouping) {
+    case 'day':
+      return format(date, 'MMM d, yyyy');
+    case 'week':
+      const weekStart = startOfWeek(date);
+      return `Week of ${format(weekStart, 'MMM d, yyyy')}`;
+    case 'month':
+      return format(date, 'MMMM yyyy');
+    case 'quarter':
+      return `Q${getQuarter(date)} ${format(date, 'yyyy')}`;
+    case 'year':
+      return format(date, 'yyyy');
+    default:
+      return value;
+  }
+};
+
 function BarChartRenderer({ data }) {
+  const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
   
@@ -151,9 +190,19 @@ function BarChartRenderer({ data }) {
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-        <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
+        <XAxis 
+          dataKey={xAxisKey} 
+          tick={{ fontSize: 10, fill: '#71717a' }} 
+          tickLine={false} 
+          axisLine={false} 
+          tickFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         <YAxis tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
-        <Tooltip cursor={{ fill: '#f4f4f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+        <Tooltip 
+          cursor={{ fill: '#f4f4f5' }} 
+          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+          labelFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         {keys.map((key, i) => (
           <Bar key={key} dataKey={key} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} radius={[4, 4, 0, 0]} />
         ))}
@@ -163,6 +212,7 @@ function BarChartRenderer({ data }) {
 }
 
 function LineChartRenderer({ data }) {
+  const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
   
@@ -172,9 +222,18 @@ function LineChartRenderer({ data }) {
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-        <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
+        <XAxis 
+          dataKey={xAxisKey} 
+          tick={{ fontSize: 10, fill: '#71717a' }} 
+          tickLine={false} 
+          axisLine={false} 
+          tickFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         <YAxis tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
-        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+        <Tooltip 
+          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+          labelFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         {keys.map((key, i) => (
           <Line key={key} type="monotone" dataKey={key} stroke={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
         ))}
@@ -184,13 +243,25 @@ function LineChartRenderer({ data }) {
 }
 
 function TableRenderer({ data }) {
+  const { grouping } = useStore();
   const columns = React.useMemo(() => {
     if (!data || !data.length) return [];
+    
+    // Determine the x-axis column to potentially format it as a date
+    const xAxisKey = Object.keys(data[0]).find(k => typeof data[0][k] === 'string');
+
     return Object.keys(data[0]).map(key => ({
       header: key,
       accessorKey: key,
+      cell: (info) => {
+        const val = info.getValue();
+        if (key === xAxisKey) {
+          return formatDateByGrouping(val, grouping);
+        }
+        return val;
+      }
     }));
-  }, [data]);
+  }, [data, grouping]);
 
   const table = useReactTable({
     data,
@@ -229,6 +300,7 @@ function TableRenderer({ data }) {
 }
 
 function AreaChartRenderer({ data }) {
+  const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
   
@@ -238,9 +310,18 @@ function AreaChartRenderer({ data }) {
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-        <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
+        <XAxis 
+          dataKey={xAxisKey} 
+          tick={{ fontSize: 10, fill: '#71717a' }} 
+          tickLine={false} 
+          axisLine={false} 
+          tickFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         <YAxis tick={{ fontSize: 10, fill: '#71717a' }} tickLine={false} axisLine={false} />
-        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+        <Tooltip 
+          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+          labelFormatter={(val) => formatDateByGrouping(val, grouping)}
+        />
         {keys.map((key, i) => (
           <Area key={key} type="monotone" dataKey={key} fillOpacity={0.3} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} stroke={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} strokeWidth={2} />
         ))}
