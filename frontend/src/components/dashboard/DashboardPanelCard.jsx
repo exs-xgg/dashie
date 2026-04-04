@@ -12,7 +12,10 @@ import remarkGfm from 'remark-gfm';
 import { format, parseISO, isValid, startOfWeek, getQuarter } from 'date-fns';
 
 export default function DashboardPanelCard({ panel, onDelete }) {
-  const { executePanelQuery, fixPanel, dateRange, grouping, setEditingPanel, isEditMode } = useStore();
+  const { executePanelQuery, fixPanel, dateRange, grouping, setEditingPanel, isEditMode, dashboards, selectedDashboardId } = useStore();
+  const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
+  const defaultColor = currentDashboard?.default_chart_color || '#6366f1';
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fixing, setFixing] = useState(false);
@@ -123,9 +126,9 @@ export default function DashboardPanelCard({ panel, onDelete }) {
             ) : (
               data && data.length > 0 ? (
                 <>
-                  {panel.chart_type === 'bar' && <BarChartRenderer data={data} />}
-                  {panel.chart_type === 'line' && <LineChartRenderer data={data} />}
-                  {panel.chart_type === 'area' && <AreaChartRenderer data={data} />}
+                  {panel.chart_type === 'bar' && <BarChartRenderer data={data} defaultColor={defaultColor} />}
+                  {panel.chart_type === 'line' && <LineChartRenderer data={data} defaultColor={defaultColor} />}
+                  {panel.chart_type === 'area' && <AreaChartRenderer data={data} defaultColor={defaultColor} />}
                   {panel.chart_type === 'pie' && <PieChartRenderer data={data} />}
                   {panel.chart_type === 'table' && <TableRenderer data={data} />}
                 </>
@@ -179,7 +182,8 @@ const formatDateByGrouping = (value, grouping) => {
   }
 };
 
-function BarChartRenderer({ data }) {
+function BarChartRenderer({ data, defaultColor }) {
+
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
@@ -204,14 +208,21 @@ function BarChartRenderer({ data }) {
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
         {keys.map((key, i) => (
-          <Bar key={key} dataKey={key} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} radius={[4, 4, 0, 0]} />
+          <Bar 
+            key={key} 
+            dataKey={key} 
+            fill={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
+            radius={[4, 4, 0, 0]} 
+          />
         ))}
+
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
-function LineChartRenderer({ data }) {
+function LineChartRenderer({ data, defaultColor }) {
+
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
@@ -235,8 +246,17 @@ function LineChartRenderer({ data }) {
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
         {keys.map((key, i) => (
-          <Line key={key} type="monotone" dataKey={key} stroke={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+          <Line 
+            key={key} 
+            type="monotone" 
+            dataKey={key} 
+            stroke={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
+            strokeWidth={2} 
+            dot={{ r: 4, strokeWidth: 2, fill: keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4] }} 
+            activeDot={{ r: 6 }} 
+          />
         ))}
+
       </LineChart>
     </ResponsiveContainer>
   );
@@ -299,7 +319,8 @@ function TableRenderer({ data }) {
   );
 }
 
-function AreaChartRenderer({ data }) {
+function AreaChartRenderer({ data, defaultColor }) {
+
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
@@ -323,8 +344,17 @@ function AreaChartRenderer({ data }) {
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
         {keys.map((key, i) => (
-          <Area key={key} type="monotone" dataKey={key} fillOpacity={0.3} fill={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} stroke={['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} strokeWidth={2} />
+          <Area 
+            key={key} 
+            type="monotone" 
+            dataKey={key} 
+            fillOpacity={0.3} 
+            fill={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
+            stroke={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
+            strokeWidth={2} 
+          />
         ))}
+
       </AreaChart>
     </ResponsiveContainer>
   );

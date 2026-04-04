@@ -38,8 +38,10 @@ class Dashboard(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     description: Optional[str] = None
+    default_chart_color: str = Field(default="#6366f1")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 
     # Relationship to panels
     panels: List["DashboardPanel"] = Relationship(back_populates="dashboard")

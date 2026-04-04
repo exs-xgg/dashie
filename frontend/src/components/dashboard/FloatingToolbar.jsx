@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { Plus, Type, BarChart2, ChevronRight, X, Layout } from 'lucide-react';
+import { Plus, Type, BarChart2, ChevronRight, X, Layout, Palette } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function FloatingToolbar() {
-  const { setAddChartModalOpen, addTextPanel, selectedDashboardId, isEditMode } = useStore();
+  const { setAddChartModalOpen, addTextPanel, selectedDashboardId, dashboards, updateDashboard, isEditMode } = useStore();
 
   if (!isEditMode) return null;
+
+  const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
+  const defaultColor = currentDashboard?.default_chart_color || '#6366f1';
 
   const handleAddText = async (type) => {
     if (!selectedDashboardId) return;
     await addTextPanel(selectedDashboardId, type);
+  };
+
+  const handleColorChange = async (e) => {
+    const newColor = e.target.value;
+    if (!selectedDashboardId) return;
+    await updateDashboard(selectedDashboardId, { default_chart_color: newColor });
   };
 
   return (
@@ -27,7 +36,7 @@ export default function FloatingToolbar() {
         </button>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 border-r border-zinc-200 dark:border-zinc-800 pr-2 mr-1">
         <button
           onClick={() => handleAddText('title')}
           className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all group relative"
@@ -50,6 +59,27 @@ export default function FloatingToolbar() {
           </span>
         </button>
       </div>
+
+      <div className="flex items-center gap-1">
+        <div className="relative group p-2 text-zinc-600 dark:text-zinc-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all cursor-pointer">
+          <Palette className="w-5 h-5" />
+          <input
+            type="color"
+            value={defaultColor}
+            onChange={handleColorChange}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            title="Chart Default Color"
+          />
+          <div 
+             className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-white dark:border-zinc-900 shadow-sm"
+             style={{ backgroundColor: defaultColor }}
+          />
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+            Default Chart Color
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
+
