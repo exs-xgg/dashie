@@ -125,13 +125,20 @@ export default function DashboardPanelCard({ panel, onDelete }) {
               <TextRenderer content={panel.content} config={panel.chart_config} />
             ) : (
               data && data.length > 0 ? (
-                <>
-                  {panel.chart_type === 'bar' && <BarChartRenderer data={data} defaultColor={defaultColor} />}
-                  {panel.chart_type === 'line' && <LineChartRenderer data={data} defaultColor={defaultColor} />}
-                  {panel.chart_type === 'area' && <AreaChartRenderer data={data} defaultColor={defaultColor} />}
-                  {panel.chart_type === 'pie' && <PieChartRenderer data={data} />}
-                  {panel.chart_type === 'table' && <TableRenderer data={data} />}
-                </>
+                (() => {
+                  const chartData = transformDataForChart(data, panel.chart_config, panel.chart_type);
+                  return (
+                    <>
+                      {panel.chart_type === 'bar' && <BarChartRenderer data={chartData} defaultColor={defaultColor} />}
+                      {panel.chart_type === 'stacked_bar' && <BarChartRenderer data={chartData} defaultColor={defaultColor} stacked={true} />}
+                      {panel.chart_type === 'line' && <LineChartRenderer data={chartData} defaultColor={defaultColor} />}
+                      {panel.chart_type === 'area' && <AreaChartRenderer data={chartData} defaultColor={defaultColor} />}
+                      {panel.chart_type === 'stacked_area' && <AreaChartRenderer data={chartData} defaultColor={defaultColor} stacked={true} />}
+                      {panel.chart_type === 'pie' && <PieChartRenderer data={chartData} />}
+                      {panel.chart_type === 'table' && <TableRenderer data={data} />}
+                    </>
+                  );
+                })()
               ) : (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-sm text-zinc-500">No data returned</p>
@@ -144,6 +151,56 @@ export default function DashboardPanelCard({ panel, onDelete }) {
     </div>
   );
 }
+
+const transformDataForChart = (originalData, chartConfig, chartType) => {
+  if (!originalData || originalData.length === 0 || chartType === 'table' || chartType === 'text') {
+    return originalData;
+  }
+  
+  const sample = originalData[0];
+  const ObjectKeys = Object.keys(sample);
+  
+  // Find numeric fields
+  const numericKeys = ObjectKeys.filter(k => typeof sample[k] === 'number');
+  
+  // Pivot only makes sense if exactly one numeric value and one extra dimension are present
+  if (numericKeys.length !== 1) return originalData;
+  const numKey = numericKeys[0];
+  
+  // Predict X-axis key
+  let xAxisKey = chartConfig?.xaxis_column;
+  if (!xAxisKey || !ObjectKeys.includes(xAxisKey)) {
+    xAxisKey = ObjectKeys.find(k => typeof sample[k] === 'string') || ObjectKeys[0];
+  }
+  
+  // Find categorical field (string, exclude xAxisKey)
+  const categoryKeys = ObjectKeys.filter(k => k !== xAxisKey && k !== numKey && typeof sample[k] === 'string');
+  
+  if (categoryKeys.length === 0) return originalData;
+  
+  // Take first categorical key to pivot by
+  const catKey = categoryKeys[0];
+  
+  // Pivot the data
+  const pivotedMap = new Map();
+  originalData.forEach(row => {
+    const xVal = row[xAxisKey];
+    let catVal = row[catKey];
+    if (catVal == null) catVal = 'Unknown';
+    const numVal = row[numKey];
+    
+    const mapKey = String(xVal);
+    
+    if (!pivotedMap.has(mapKey)) {
+      pivotedMap.set(mapKey, { [xAxisKey]: xVal });
+    }
+    
+    const entry = pivotedMap.get(mapKey);
+    entry[catVal] = (entry[catVal] || 0) + numVal;
+  });
+  
+  return Array.from(pivotedMap.values());
+};
 
 const formatDateByGrouping = (value, grouping) => {
   if (!value) return value;
@@ -182,7 +239,7 @@ const formatDateByGrouping = (value, grouping) => {
   }
 };
 
-function BarChartRenderer({ data, defaultColor }) {
+function BarChartRenderer({ data, defaultColor, stacked }) {
 
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
@@ -207,12 +264,14 @@ function BarChartRenderer({ data, defaultColor }) {
           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
+        <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" />
         {keys.map((key, i) => (
           <Bar 
             key={key} 
             dataKey={key} 
+            stackId={stacked ? "a" : undefined}
             fill={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
-            radius={[4, 4, 0, 0]} 
+            radius={stacked ? (i === keys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]) : [4, 4, 0, 0]} 
           />
         ))}
 
@@ -245,6 +304,7 @@ function LineChartRenderer({ data, defaultColor }) {
           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
+        <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" />
         {keys.map((key, i) => (
           <Line 
             key={key} 
@@ -319,7 +379,7 @@ function TableRenderer({ data }) {
   );
 }
 
-function AreaChartRenderer({ data, defaultColor }) {
+function AreaChartRenderer({ data, defaultColor, stacked }) {
 
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
@@ -343,11 +403,13 @@ function AreaChartRenderer({ data, defaultColor }) {
           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
           labelFormatter={(val) => formatDateByGrouping(val, grouping)}
         />
+        <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" />
         {keys.map((key, i) => (
           <Area 
             key={key} 
             type="monotone" 
             dataKey={key} 
+            stackId={stacked ? "a" : undefined}
             fillOpacity={0.3} 
             fill={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 
             stroke={keys.length === 1 ? defaultColor : ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b'][i % 4]} 

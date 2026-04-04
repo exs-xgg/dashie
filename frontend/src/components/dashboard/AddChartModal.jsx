@@ -147,9 +147,11 @@ export default function AddChartModal() {
                   >
                     <option value="auto">Auto (Let AI decide)</option>
                     <option value="bar">Bar Chart</option>
+                    <option value="stacked_bar">Stacked Bar Chart</option>
                     <option value="line">Line Chart</option>
                     <option value="pie">Pie Chart</option>
                     <option value="area">Area Chart</option>
+                    <option value="stacked_area">Stacked Area Chart</option>
                     <option value="table">Table / Text Data</option>
                   </select>
                 </div>

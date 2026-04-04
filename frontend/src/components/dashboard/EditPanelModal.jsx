@@ -172,8 +172,10 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary"
                  >
                    <option value="bar">Bar Chart</option>
+                   <option value="stacked_bar">Stacked Bar Chart</option>
                    <option value="line">Line Chart</option>
                    <option value="area">Area Chart</option>
+                   <option value="stacked_area">Stacked Area Chart</option>
                    <option value="pie">Pie Chart</option>
                    <option value="table">Table / Text Data</option>
                  </select>

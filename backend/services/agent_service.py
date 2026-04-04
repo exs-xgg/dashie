@@ -12,7 +12,7 @@ import os
 class ChartConfig(BaseModel):
     sql: str = Field(description="The raw SQL query text.")
     title: str = Field(description="A summary title for the chart/data.")
-    chart_type: Literal["bar", "line", "area", "table", "pie"] = Field(description="The type of chart to display.")
+    chart_type: Literal["bar", "line", "area", "table", "pie", "stacked_bar", "stacked_area"] = Field(description="The type of chart to display.")
     xaxis_column: str = Field(description="The column name to use for the X-axis.")
     yaxis_columns: List[str] = Field(description="A list of column names to use for the Y-axis.")
 
