@@ -65,6 +65,31 @@ async def generate_sql_query(
     
     return data
 
+@router.get("/suggestions/{datasource_id}")
+async def get_query_suggestions(
+    datasource_id: uuid.UUID,
+    session: Session = Depends(get_session)
+):
+    datasource = session.get(DataSource, datasource_id)
+    if not datasource:
+        raise HTTPException(status_code=404, detail="Data source not found")
+    dialect = datasource.db_type if datasource.db_type else "postgresql"
+    driver = "mysql+pymysql" if dialect == "mysql" else dialect
+    uri = f"{driver}://{datasource.user}:{datasource.encrypted_password}@{datasource.host}:{datasource.port}/{datasource.database}"
+    
+    # Retrieve context
+    manifests = session.exec(select(SchemaManifest).where(SchemaManifest.data_source_id == datasource_id)).all()
+    context = "\n\n".join([
+        f"Table: {m.table_name}\nColumns: " + ", ".join([f"{c.get('name')} ({c.get('type')})" for c in m.columns])
+        for m in manifests
+    ])
+    
+    try:
+        suggestions = await agent_service.suggest_queries(str(datasource_id), uri, context)
+        return {"suggestions": suggestions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate suggestions: {str(e)}")
+
 class FixQueryRequest(BaseModel):
     panel_id: uuid.UUID
     error_message: str

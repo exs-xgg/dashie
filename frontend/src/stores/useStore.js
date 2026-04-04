@@ -143,6 +143,15 @@ const useStore = create((set, get) => ({
       throw err;
     }
   },
+  fetchQuerySuggestions: async (datasourceId) => {
+    try {
+      const res = await axios.get(`/api/query/suggestions/${datasourceId}`);
+      return res.data.suggestions || [];
+    } catch (err) {
+      console.error("Failed to fetch query suggestions:", err);
+      return [];
+    }
+  },
   
   setDateRange: (range) => {
     set({ dateRange: range });

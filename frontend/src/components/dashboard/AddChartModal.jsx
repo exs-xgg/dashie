@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Search, Sparkles, ChevronRight, Database, Loader2, Code, Plus } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function AddChartModal() {
-  const { isAddChartModalOpen, setAddChartModalOpen, datasources, generateQuery, selectedDashboardId, fetchPanels, createPanel } = useStore();
+  const { isAddChartModalOpen, setAddChartModalOpen, datasources, generateQuery, selectedDashboardId, fetchPanels, createPanel, fetchQuerySuggestions } = useStore();
   const [prompt, setPrompt] = useState("");
   const [selectedDb, setSelectedDb] = useState("");
   const [preferredChartType, setPreferredChartType] = useState("auto");
@@ -11,6 +11,23 @@ export default function AddChartModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedConfig, setGeneratedConfig] = useState(null);
   const [error, setError] = useState(null);
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedDb) {
+      setSuggestions([]);
+      setIsSuggestionsLoading(true);
+      fetchQuerySuggestions(selectedDb).then((fetchedSuggestions) => {
+        setSuggestions(fetchedSuggestions);
+      }).finally(() => {
+        setIsSuggestionsLoading(false);
+      });
+    } else {
+      setSuggestions([]);
+    }
+  }, [selectedDb]);
 
   if (!isAddChartModalOpen) return null;
 
@@ -20,6 +37,8 @@ export default function AddChartModal() {
     setPreferredChartType("auto");
     setGeneratedConfig(null);
     setError(null);
+    setSuggestions([]);
+
     setAddChartModalOpen(false);
   };
 
@@ -161,9 +180,31 @@ export default function AddChartModal() {
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
+                     </div>
+                  </div>
+                  
+                  {/* AI Suggestions */}
+                  {selectedDb && (isSuggestionsLoading || suggestions.length > 0) && (
+                    <div className="flex flex-wrap items-stretch gap-3 mt-4 animate-in fade-in duration-300">
+                      {isSuggestionsLoading ? (
+                        <div className="flex items-center gap-1.5 text-sm text-zinc-500 font-medium px-2 py-1">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Generating suggestions...
+                        </div>
+                      ) : (
+                        suggestions.map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setPrompt(suggestion)}
+                            className="text-sm p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md text-zinc-600 dark:text-zinc-300 font-medium rounded-xl transition-all text-left flex-1 min-w-[200px] shadow-sm leading-relaxed"
+                          >
+                            {suggestion}
+                          </button>
+                        ))
+                      )}
                     </div>
-                 </div>
-              </div>
+                  )}
+               </div>
 
               {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-200">

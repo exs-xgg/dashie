@@ -167,6 +167,41 @@ Ensure the fixed query matches the schema context and provides valid columns for
 """
         # We can reuse run_query by passing the "Fix" prompt as the main prompt
         return await self.run_query(datasource_id, connection_uri, prompt, schema_context)
+    async def suggest_queries(self, datasource_id: str, connection_uri: str, schema_context: str) -> List[str]:
+        """
+        Specialized agent flow to suggest up to 3 insightful queries based on the database schema.
+        """
+        prompt = f"""Based on the following database schema, suggest up to 3 insightful natural language questions or report descriptions that a user might want to ask to visualize the data.
+Keep them concise, practical, and highly relevant to the tables and columns provided.
+Return the suggestions EXACTLY as a JSON array of strings. Do not include markdown formatting like ```json.
+
+Schema Context:
+{schema_context}
+"""
+        response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+        content = response.content
+        
+        if isinstance(content, list):
+            content = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in content])
+        elif not isinstance(content, str):
+            content = str(content)
+            
+        if content.startswith("```json"):
+            content = content.replace("```json\n", "").replace("```", "").strip()
+        elif content.startswith("```"):
+            content = content.replace("```\n", "").replace("```", "").strip()
+            
+        import json
+        try:
+            suggestions = json.loads(content)
+            if isinstance(suggestions, list):
+                return suggestions[:3]
+        except Exception:
+            pass
+            
+        # Fallback if json parsing fails
+        lines = [line.strip().lstrip("-*1234567890. ") for line in content.split('\n') if line.strip() and len(line) > 5]
+        return lines[:3]
 
     async def scan_schema(self, datasource_id: str, connection_uri: str):
         """
