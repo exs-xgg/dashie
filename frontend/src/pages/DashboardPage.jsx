@@ -51,20 +51,18 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col">
       <AddChartModal />
-      <EditPanelModal 
-        panel={editingPanel} 
-        isOpen={!!editingPanel} 
-        onClose={() => setEditingPanel(null)} 
+      <EditPanelModal
+        panel={editingPanel}
+        isOpen={!!editingPanel}
+        onClose={() => setEditingPanel(null)}
       />
       <DashboardSettingsModal />
-      
+
       {isEditMode && (
-        <div className="flex justify-end mb-4 sticky top-[4.5rem] z-30 pointer-events-none">
-          <div className="pointer-events-auto">
-            <FloatingToolbar />
-          </div>
+        <div className="fixed right-6 top-[20%] xl:right-10 z-50 pointer-events-auto transition-all duration-300">
+          <FloatingToolbar />
         </div>
       )}
 

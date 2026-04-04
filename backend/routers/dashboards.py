@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from database import get_session
-from models.domain import Dashboard, DashboardPanel
+from models.domain import Dashboard, DashboardPanel, QueryHistory
 import uuid
 from datetime import datetime
 from typing import List, Dict, Any
@@ -94,6 +94,11 @@ async def delete_panel(
     if not panel:
         raise HTTPException(status_code=404, detail="Panel not found")
         
+    # Cascade delete QueryHistory for this panel
+    query_histories = session.exec(select(QueryHistory).where(QueryHistory.panel_id == panel_id)).all()
+    for qh in query_histories:
+        session.delete(qh)
+        
     session.delete(panel)
     session.commit()
     return {"status": "deleted"}
@@ -130,6 +135,11 @@ async def delete_dashboard(
     # Also delete associated panels for cleanup
     panels = session.exec(select(DashboardPanel).where(DashboardPanel.dashboard_id == dashboard_id)).all()
     for panel in panels:
+        # Cascade delete QueryHistory for this panel
+        query_histories = session.exec(select(QueryHistory).where(QueryHistory.panel_id == panel.id)).all()
+        for qh in query_histories:
+            session.delete(qh)
+            
         session.delete(panel)
         
     session.delete(dashboard)
