@@ -62,8 +62,8 @@ export default function DashboardPanelCard({ panel, onDelete }) {
   const isTitleCard = panel.chart_type === 'text' && panel.chart_config?.text_type === 'title';
 
   return (
-    <div className={`bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col h-full group transition-all relative ${panel.chart_type === 'text' ? 'p-4' : 'p-6'}`}>
-      <div className={`${panel.chart_type === 'text' ? 'absolute top-1 right-1 z-20' : 'flex justify-between items-start mb-4'} ${isEditMode ? 'drag-handle cursor-move' : ''}`}>
+    <div className={`bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col h-full group transition-all relative ${panel.chart_type === 'text' ? 'p-4' : 'p-6'} ${isEditMode && panel.chart_type === 'text' ? 'drag-handle cursor-move' : ''}`}>
+      <div className={panel.chart_type === 'text' ? 'absolute top-1 right-1 z-20' : `flex justify-between items-start mb-4 ${isEditMode ? 'drag-handle cursor-move' : ''}`}>
         {!isTitleCard && (
           <div>
             <h3 className="text-zinc-900 dark:text-zinc-50 text-sm font-bold">{panel.title}</h3>
