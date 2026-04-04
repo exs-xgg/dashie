@@ -116,6 +116,7 @@ async def fix_sql_query(
 class ExecuteQueryRequest(BaseModel):
     sql: str
     date_range: Optional[Dict[str, str]] = None
+    grouping: Optional[str] = None
 
 @router.post("/execute")
 async def execute_sql_query(
@@ -133,6 +134,7 @@ async def execute_sql_query(
     import re
     final_sql = request.sql
     
+    # 1. Handle Date Filter Replacement
     if request.date_range:
         start = request.date_range['start']
         end = request.date_range['end']
@@ -142,10 +144,34 @@ async def execute_sql_query(
             return f"{col_name} >= '{start}' AND {col_name} <= '{end}'"
             
         final_sql = re.sub(r"\{\{date_filter:(.+?)\}\}", replace_date_filter, final_sql)
-        # Handle fallback for exact match without column
         final_sql = final_sql.replace("{{date_filter}}", "TRUE")
     else:
         final_sql = re.sub(r"\{\{date_filter.*?\}\}", "TRUE", final_sql)
+
+    # 2. Handle Date Grouping Replacement
+    group = request.grouping or "day"
+    
+    def replace_date_group(match):
+        col_name = match.group(1).strip()
+        if dialect == "postgresql":
+            # Postgres DATE_TRUNC
+            return f"DATE_TRUNC('{group}', {col_name})"
+        elif dialect == "mysql":
+            # MySQL DATE_FORMAT fallbacks
+            if group == "day":
+                return f"DATE_FORMAT({col_name}, '%Y-%m-%d')"
+            elif group == "week":
+                return f"DATE_FORMAT({col_name}, '%Y-%u')"
+            elif group == "month":
+                return f"DATE_FORMAT({col_name}, '%Y-%m-01')"
+            elif group == "quarter":
+                return f"CONCAT(YEAR({col_name}), '-Q', QUARTER({col_name}))"
+            elif group == "year":
+                return f"DATE_FORMAT({col_name}, '%Y-01-01')"
+            return col_name
+        return col_name
+
+    final_sql = re.sub(r"\{\{date_group:(.+?)\}\}", replace_date_group, final_sql)
     
     try:
         engine = create_engine(uri)

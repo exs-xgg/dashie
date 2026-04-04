@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, Edit2, Eye, Settings } from 'lucide-react';
+import { Calendar, Edit2, Eye, Settings, Layers } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function TopBar() {
-  const { dateRange, setDateRange, dashboards, selectedDashboardId, setAddChartModalOpen, updateDashboard, isEditMode, setIsEditMode, setDashboardSettingsModalOpen } = useStore();
+  const { dateRange, setDateRange, dashboards, selectedDashboardId, setAddChartModalOpen, updateDashboard, isEditMode, setIsEditMode, setDashboardSettingsModalOpen, grouping, setGrouping } = useStore();
   const [isEditing, setIsEditing] = React.useState(false);
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
   const [editValue, setEditValue] = React.useState("");
@@ -85,6 +85,22 @@ export default function TopBar() {
             onKeyDown={(e) => e.key === 'Enter' && syncDateStore()}
             className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
           />
+        </div>
+        
+        {/* Grouping Selector */}
+        <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-lg gap-2 shadow-sm shadow-zinc-200/50">
+          <Layers className="w-4 h-4 text-zinc-500" />
+          <select 
+            value={grouping}
+            onChange={(e) => setGrouping(e.target.value)}
+            className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
+          >
+            <option value="day">Daily</option>
+            <option value="week">Weekly</option>
+            <option value="month">Monthly</option>
+            <option value="quarter">Quarterly</option>
+            <option value="year">Yearly</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-3">

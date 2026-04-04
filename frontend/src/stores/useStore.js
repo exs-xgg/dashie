@@ -14,11 +14,13 @@ const useStore = create((set, get) => ({
     start: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
   },
+  grouping: 'day', // Default grouping
   activeSchema: null,
   editingPanel: null,
   
   // Actions
   setIsEditMode: (isEditMode) => set({ isEditMode }),
+  setGrouping: (grouping) => set({ grouping }),
   setEditingPanel: (panel) => set({ editingPanel: panel }),
   fetchDataSources: async () => {
     try {
@@ -109,10 +111,11 @@ const useStore = create((set, get) => ({
 
   executePanelQuery: async (datasourceId, sql) => {
     try {
-      const { dateRange } = get();
+      const { dateRange, grouping } = get();
       const res = await axios.post(`/api/query/execute?datasource_id=${datasourceId}`, {
         sql,
-        date_range: dateRange
+        date_range: dateRange,
+        grouping: grouping
       });
       return res.data;
     } catch (err) {

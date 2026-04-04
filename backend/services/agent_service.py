@@ -65,11 +65,12 @@ class AgentService:
         1. Generating a query using standard {dialect} SQL syntax.
         2. ALWAYS use a `{{{{date_filter:table_name.column_name}}}}` placeholder in your WHERE clause if the user refers to a time period. Examples: `WHERE {{{{date_filter:orders.created_at}}}}` or `WHERE {{{{date_filter:users.registered_on}}}}`. Determine the correct date column from the schema.
         IMPORTANT: If you use an alias for a table (e.g., `FROM orders o`), you MUST use the exact alias in the date_filter (e.g., `{{{{date_filter:o.created_at}}}}`).
-        3. Ensuring the query is valid and matches the provided schema context.
+        3. When grouping data over a date or time dimension (e.g., "by month", "daily", "per year"), NEVER use standard database functions like DATE_TRUNC or DATE_FORMAT. INSTEAD, ALWAYS use the `{{{{date_group:table_name.column_name}}}}` macro in your SELECT and GROUP BY clauses.
+        4. Ensuring the query is valid and matches the provided schema context.
         """
 
         if state.get("preferred_chart_type") and state["preferred_chart_type"] != "auto":
-            system_prompt += f"\n4. The user has explicitly requested to see this data as a {state['preferred_chart_type']} chart if possible. Strongly bias towards generating a ChartConfig with chart_type='{state['preferred_chart_type']}' and structuring the SQL query appropriately to support that format.\n"
+            system_prompt += f"\n5. The user has explicitly requested to see this data as a {state['preferred_chart_type']} chart if possible. Strongly bias towards generating a ChartConfig with chart_type='{state['preferred_chart_type']}' and structuring the SQL query appropriately to support that format.\n"
 
         system_prompt += f"""
         Here is the schema context learned so far:
@@ -97,6 +98,13 @@ class AgentService:
             
         test_sql = re.sub(r"\{\{date_filter:(.+?)\}\}", replace_for_validation, config.sql)
         test_sql = test_sql.replace("{{date_filter}}", "TRUE")
+        
+        # Also replace date_group for validation
+        def replace_group_for_validation(match):
+            col_name = match.group(1).strip()
+            return col_name # Just use raw column for validation
+            
+        test_sql = re.sub(r"\{\{date_group:(.+?)\}\}", replace_group_for_validation, test_sql)
         
         def run_test():
             engine = create_engine(state["connection_uri"])
