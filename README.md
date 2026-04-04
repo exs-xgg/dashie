@@ -16,8 +16,8 @@ Powered by Google Gemini, LangGraph, and the Model Context Protocol.
 
 
 ## 📖 Overview
-<img width="1896" height="677" alt="Screenshot 2026-04-04 at 9 35 45 PM" src="https://github.com/user-attachments/assets/1586a9f9-2b7b-49af-9776-b2ded2cdc40a" />
-<img width="1887" height="560" alt="Screenshot 2026-04-04 at 9 36 19 PM" src="https://github.com/user-attachments/assets/55df64ca-b5b8-4067-a009-5ea12f5edbce" />
+<img width="1896" height="677" alt="Dashie builder" src="https://github.com/user-attachments/assets/1586a9f9-2b7b-49af-9776-b2ded2cdc40a" />
+<img width="1887" height="560" alt="Dashie AI" src="https://github.com/user-attachments/assets/55df64ca-b5b8-4067-a009-5ea12f5edbce" />
 
 **dashie** is an AI-first analytical platform that lets anyone — from analysts to executives — create interactive data dashboards by simply describing what they want to see. Under the hood, a self-correcting LangGraph agent translates natural language into validated SQL, picks the optimal chart type, and renders it in a drag-and-drop canvas.
 
@@ -32,7 +32,7 @@ Powered by Google Gemini, LangGraph, and the Model Context Protocol.
 - **"Fix with AI" button** — If a chart breaks after schema changes, one click sends the error back through the agent loop for automatic repair.
 
 ### 📊 Rich Visualizations
-- **5 chart types** — Bar, Line, Area, Pie (donut), and fully sortable Data Tables (via TanStack Table).
+- **5 chart types** — Bar (standard/stacked), Line, Area (standard/stacked), Pie (donut), and fully sortable Data Tables (via TanStack Table).
 - **Markdown text panels** — Add Titles and Captions with full GFM Markdown support for dashboard documentation and organization.
 - **Global date filter** — A shared date range picker that dynamically injects date constraints into all panel queries via `{{date_filter:column}}` placeholders.
 
@@ -41,6 +41,8 @@ Powered by Google Gemini, LangGraph, and the Model Context Protocol.
 - **Persistent layouts** — Panel positions and sizes are saved to the backend and restored on reload.
 - **Edit / View mode toggle** — Lock down the dashboard to prevent accidental edits while keeping the date filter interactive.
 - **Floating toolbar** — A sticky, contextual toolbar for quickly adding AI charts, titles, or captions.
+- **Dashboard Settings Modal** — Centralized configuration for updating chart details, fixing queries, and secure panel deletion with confirmation.
+- **Enhanced drag-and-drop** — All cards, including text and caption panels, are fully draggable across their entire card area for easier organizing.
 - **Inline panel editing** — Edit a panel's title, SQL query, chart type, and axis configuration without leaving the dashboard.
 
 ### 🔌 Data Connections
@@ -48,11 +50,6 @@ Powered by Google Gemini, LangGraph, and the Model Context Protocol.
 - **One-click schema sync** — An AI agent crawls all tables, columns, types, primary keys, and sample rows to build a queryable manifest.
 - **Schema Inspector** — Browse synchronized table schemas directly in the connection modal.
 - **MCP Integration** — Connect Model Context Protocol servers for secure, standardized database introspection and tool use.
-
-### 🎨 Design & UX
-- **Dark mode** — Full dark theme with carefully tuned zinc palette and glassmorphism effects.
-- **Micro-animations** — Smooth transitions, hover effects, loading spinners, and backdrop blur throughout.
-- **Responsive sidebar** — Persistent navigation with workspace listing, connection management, and settings.
 
 ---
 
