@@ -5,10 +5,9 @@ import useStore from '../stores/useStore';
 import { format } from 'date-fns';
 
 export default function WorkspacePage() {
-  const { dashboards, createDashboard, deleteDashboard } = useStore();
+  const { dashboards, createDashboard } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDash, setNewDash] = useState({ name: '', description: '' });
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // stores dashboard ID
   const navigate = useNavigate();
 
   const handleCreate = async (e) => {
@@ -20,11 +19,6 @@ export default function WorkspacePage() {
       setNewDash({ name: '', description: '' });
       navigate(`/dashboard/${created.id}`);
     }
-  };
-
-  const handleDelete = async (id) => {
-    await deleteDashboard(id);
-    setDeleteConfirm(null);
   };
 
   return (
@@ -59,16 +53,6 @@ export default function WorkspacePage() {
                 <div className="p-2.5 bg-secondary/10 text-secondary rounded-lg">
                   <LayoutDashboard className="w-5 h-5" />
                 </div>
-                <button 
-                  onClick={(e) => { 
-                    e.preventDefault(); 
-                    e.stopPropagation(); 
-                    setDeleteConfirm(dash.id); 
-                  }}
-                  className="relative z-20 p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
               <div>
                 <h3 className="font-bold text-zinc-900 dark:text-zinc-50 text-lg mb-1 truncate">{dash.name}</h3>
@@ -137,29 +121,6 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {/* Delete confirmation modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-zinc-950 w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-xl font-bold mb-4">Delete Dashboard?</h3>
-            <p className="text-zinc-500 mb-8">This action cannot be undone. All panels and configurations within this dashboard will be permanently removed.</p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-3 font-bold text-zinc-500 hover:text-zinc-700"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 bg-error text-white py-3 rounded-xl font-bold shadow-lg shadow-error/20 hover:bg-red-700 transition-all"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Layout, Save } from 'lucide-react';
+import { X, Settings, Layout, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useStore from '../../stores/useStore';
 
 export default function DashboardSettingsModal() {
@@ -8,8 +9,11 @@ export default function DashboardSettingsModal() {
     setDashboardSettingsModalOpen, 
     dashboards, 
     selectedDashboardId, 
-    updateDashboard 
+    updateDashboard,
+    deleteDashboard
   } = useStore();
+
+  const navigate = useNavigate();
 
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
   
@@ -18,6 +22,7 @@ export default function DashboardSettingsModal() {
     description: ''
   });
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (currentDashboard && isDashboardSettingsModalOpen) {
@@ -43,9 +48,19 @@ export default function DashboardSettingsModal() {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteDashboard(selectedDashboardId);
+      setDashboardSettingsModalOpen(false);
+      navigate('/');
+    } catch (err) {
+      console.error("Failed to delete dashboard:", err);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-sm">
-      <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[90vh] relative">
         <div className="flex items-center justify-between p-6 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-400">
@@ -102,6 +117,27 @@ export default function DashboardSettingsModal() {
             </div>
           </div>
 
+          {/* Danger Zone Section */}
+          <div className="space-y-4 pt-6 mt-6 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2 text-error mb-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Danger Zone</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border border-error/20 bg-error/5 rounded-xl">
+              <div>
+                <h4 className="text-sm font-semibold text-error mb-1">Delete Dashboard</h4>
+                <p className="text-xs text-error/80">Permanently remove this dashboard and all its widgets.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-4 py-2 bg-error text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-all shadow-lg shadow-error/20"
+              >
+                Delete Dashboard
+              </button>
+            </div>
+          </div>
         </form>
 
         <div className="p-6 border-t border-zinc-100 dark:border-zinc-800 flex justify-end gap-3">
@@ -130,6 +166,35 @@ export default function DashboardSettingsModal() {
             )}
           </button>
         </div>
+
+        {/* Delete Confirmation Overlay */}
+        {showDeleteConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-sm rounded-2xl">
+            <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-800 text-center flex flex-col">
+              <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Delete Dashboard?</h3>
+              <p className="text-zinc-500 text-sm mb-8">This action cannot be undone. All panels and configurations will be permanently removed.</p>
+              <div className="flex gap-3 mt-auto">
+                <button 
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 font-bold text-zinc-500 hover:text-zinc-700 bg-zinc-100 dark:bg-zinc-800 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleDelete}
+                  className="flex-1 bg-error text-white py-3 rounded-xl font-bold shadow-lg shadow-error/20 hover:bg-red-700 transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
