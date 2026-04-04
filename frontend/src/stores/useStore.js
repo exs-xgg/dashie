@@ -20,7 +20,13 @@ const useStore = create((set, get) => ({
   
   // Actions
   setIsEditMode: (isEditMode) => set({ isEditMode }),
-  setGrouping: (grouping) => set({ grouping }),
+  setGrouping: (grouping) => {
+    set({ grouping });
+    const id = get().selectedDashboardId;
+    if (id) {
+      localStorage.setItem(`dashie_grouping_${id}`, grouping);
+    }
+  },
   setEditingPanel: (panel) => set({ editingPanel: panel }),
   fetchDataSources: async () => {
     try {
@@ -138,8 +144,30 @@ const useStore = create((set, get) => ({
     }
   },
   
-  setDateRange: (range) => set({ dateRange: range }),
-  setSelectedDashboardId: (id) => set({ selectedDashboardId: id }),
+  setDateRange: (range) => {
+    set({ dateRange: range });
+    const id = get().selectedDashboardId;
+    if (id) {
+      localStorage.setItem(`dashie_date_range_${id}`, JSON.stringify(range));
+    }
+  },
+  setSelectedDashboardId: (id) => {
+    set({ selectedDashboardId: id });
+    if (id) {
+      const savedRange = localStorage.getItem(`dashie_date_range_${id}`);
+      if (savedRange) {
+        try {
+          set({ dateRange: JSON.parse(savedRange) });
+        } catch (e) {
+          console.error("Failed to parse saved date range", e);
+        }
+      }
+      const savedGrouping = localStorage.getItem(`dashie_grouping_${id}`);
+      if (savedGrouping) {
+        set({ grouping: savedGrouping });
+      }
+    }
+  },
   setAddChartModalOpen: (isOpen) => set({ isAddChartModalOpen: isOpen }),
   setDashboardSettingsModalOpen: (isOpen) => set({ isDashboardSettingsModalOpen: isOpen }),
 
