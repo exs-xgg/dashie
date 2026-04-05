@@ -4,6 +4,7 @@ import AddChartModal from '../components/dashboard/AddChartModal';
 import EditPanelModal from '../components/dashboard/EditPanelModal';
 import DashboardPanelCard from '../components/dashboard/DashboardPanelCard';
 import DashboardSettingsModal from '../components/dashboard/DashboardSettingsModal';
+import DashboardFilters from '../components/dashboard/DashboardFilters';
 import FloatingToolbar from '../components/dashboard/FloatingToolbar';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
@@ -59,6 +60,8 @@ export default function DashboardPage() {
         onClose={() => setEditingPanel(null)}
       />
       <DashboardSettingsModal />
+
+      <DashboardFilters />
 
       {isEditMode && (
         <div className="fixed right-6 top-[20%] xl:right-10 z-50 pointer-events-auto transition-all duration-300">
