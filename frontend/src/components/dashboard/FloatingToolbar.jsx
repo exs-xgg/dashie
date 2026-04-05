@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, BarChart2, Layout, Palette } from 'lucide-react';
+import { Type, BarChart2, Layout, Palette, Sparkles } from 'lucide-react';
 import useStore from '../../stores/useStore';
 import { DEFAULT_CHART_COLOR } from '../../constants/chartColors';
 
@@ -27,10 +27,10 @@ export default function FloatingToolbar() {
       <div className="flex flex-col items-center border-b border-outline-variant/10 pb-2 mb-1 gap-1">
         <button
           onClick={() => setAddChartModalOpen(true)}
-          className="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-lg transition-all group relative"
+          className="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-lg transition-all group relative neon-glow"
           title="Add Chart with AI"
         >
-          <BarChart2 className="w-5 h-5" />
+          <Sparkles className="w-5 h-5" />
           <span className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-2.5 py-1.5 bg-on-surface text-surface-container-lowest text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap shadow-xl uppercase tracking-widest">
             Add Chart with AI
           </span>
