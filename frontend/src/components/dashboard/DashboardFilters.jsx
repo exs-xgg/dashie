@@ -17,42 +17,44 @@ export default function DashboardFilters() {
   };
 
   return (
-    <div className="flex items-center gap-4 mb-6">
+    <div className="flex items-center justify-center gap-6 mb-12">
       {/* Date Filter */}
-      <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-lg gap-2 shadow-sm shadow-zinc-200/50">
-        <label htmlFor="start-date-filter" className="sr-only">Start Date</label>
-        <Calendar className="w-4 h-4 text-zinc-500" />
-        <input
-          id="start-date-filter"
-          type="date"
-          name="startDate"
-          value={localRange.start}
-          onChange={(e) => setLocalRange({ ...localRange, start: e.target.value })}
-          onBlur={syncDateStore}
-          onKeyDown={(e) => e.key === 'Enter' && syncDateStore()}
-          className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
-        />
-        <span className="text-zinc-400 font-medium">—</span>
-        <label htmlFor="end-date-filter" className="sr-only">End Date</label>
-        <input
-          id="end-date-filter"
-          type="date"
-          name="endDate"
-          value={localRange.end}
-          onChange={(e) => setLocalRange({ ...localRange, end: e.target.value })}
-          onBlur={syncDateStore}
-          onKeyDown={(e) => e.key === 'Enter' && syncDateStore()}
-          className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
-        />
+      <div className="flex items-center bg-surface-container-lowest border border-outline-variant/15 px-6 py-2 rounded-full gap-4 shadow-sm hover:shadow-md transition-all">
+        <Calendar className="w-4 h-4 text-secondary" />
+        <div className="flex items-center gap-2">
+          <label htmlFor="start-date-filter" className="sr-only">Start Date</label>
+          <input
+            id="start-date-filter"
+            type="date"
+            name="startDate"
+            value={localRange.start}
+            onChange={(e) => setLocalRange({ ...localRange, start: e.target.value })}
+            onBlur={syncDateStore}
+            onKeyDown={(e) => e.key === 'Enter' && syncDateStore()}
+            className="bg-transparent text-sm font-bold text-on-surface outline-none cursor-pointer"
+          />
+          <span className="text-outline-variant font-bold">—</span>
+          <label htmlFor="end-date-filter" className="sr-only">End Date</label>
+          <input
+            id="end-date-filter"
+            type="date"
+            name="endDate"
+            value={localRange.end}
+            onChange={(e) => setLocalRange({ ...localRange, end: e.target.value })}
+            onBlur={syncDateStore}
+            onKeyDown={(e) => e.key === 'Enter' && syncDateStore()}
+            className="bg-transparent text-sm font-bold text-on-surface outline-none cursor-pointer"
+          />
+        </div>
       </div>
 
       {/* Grouping Selector */}
-      <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-lg gap-2 shadow-sm shadow-zinc-200/50">
-        <Layers className="w-4 h-4 text-zinc-500" />
+      <div className="flex items-center bg-surface-container-lowest border border-outline-variant/15 px-6 py-2 rounded-full gap-4 shadow-sm hover:shadow-md transition-all">
+        <Layers className="w-4 h-4 text-secondary" />
         <select
           value={grouping}
           onChange={(e) => setGrouping(e.target.value)}
-          className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 outline-none cursor-pointer"
+          className="bg-transparent text-sm font-bold text-on-surface outline-none cursor-pointer uppercase tracking-widest"
         >
           <option value="day">Daily</option>
           <option value="week">Weekly</option>

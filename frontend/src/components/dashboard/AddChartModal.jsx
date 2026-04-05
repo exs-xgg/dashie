@@ -38,7 +38,6 @@ export default function AddChartModal() {
     setGeneratedConfig(null);
     setError(null);
     setSuggestions([]);
-
     setAddChartModalOpen(false);
   };
 
@@ -77,7 +76,7 @@ export default function AddChartModal() {
         natural_language_query: prompt,
         generated_sql: generatedConfig.sql,
         data_source_id: selectedDb,
-        layout: { w: 6, h: 4, x: 0, y: Infinity }, // Infinity puts it at bottom
+        layout: { w: 6, h: 4, x: 0, y: Infinity },
         chart_config: {
           xaxis_column: generatedConfig.xaxis_column,
           yaxis_columns: generatedConfig.yaxis_columns
@@ -92,30 +91,30 @@ export default function AddChartModal() {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-inverse-surface/10 backdrop-blur-md"
       onClick={handleClose}
     >
       <div 
-        className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-3xl border border-outline-variant/15 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-6 border-b border-zinc-100 dark:border-zinc-800">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Create New Chart</h2>
+        <div className="flex justify-between items-center p-6 border-b border-outline-variant/10">
+          <h2 className="text-lg font-bold text-on-surface">Create New Chart</h2>
           <button 
             onClick={handleClose}
-            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="p-8 flex flex-col gap-8 overflow-y-auto">
+        <div className="p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">
           {!generatedConfig && !isLoading && (
             <>
               {/* Database & Chart Preference Selection */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="datasource-select" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <label htmlFor="datasource-select" className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
                     <Database className="w-4 h-4 text-secondary" />
                     Select Database
                   </label>
@@ -124,7 +123,7 @@ export default function AddChartModal() {
                     name="datasource"
                     value={selectedDb}
                     onChange={(e) => setSelectedDb(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none"
+                    className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3.5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-secondary/20 transition-all outline-none"
                   >
                     <option value="" disabled>Choose a connected database...</option>
                     {datasources.map(db => (
@@ -134,7 +133,7 @@ export default function AddChartModal() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="chart-type-select" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <label htmlFor="chart-type-select" className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
                     <Search className="w-4 h-4 text-secondary" />
                     Preferred Type
                   </label>
@@ -143,7 +142,7 @@ export default function AddChartModal() {
                     name="chart_type"
                     value={preferredChartType}
                     onChange={(e) => setPreferredChartType(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none"
+                    className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3.5 text-sm font-bold text-on-surface focus:ring-2 focus:ring-secondary/20 transition-all outline-none"
                   >
                     <option value="auto">Auto (Let AI decide)</option>
                     <option value="bar">Bar Chart</option>
@@ -159,7 +158,7 @@ export default function AddChartModal() {
 
               {/* Natural Language Input */}
               <div className="flex flex-col gap-2">
-                 <label htmlFor="nl-query-input" className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                 <label htmlFor="nl-query-input" className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-secondary" />
                     What would you like to visualize?
                  </label>
@@ -172,13 +171,13 @@ export default function AddChartModal() {
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="e.g., Show me top 10 products by revenue this month."
-                      className="w-full h-16 px-6 pr-24 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-base font-medium placeholder:text-zinc-400 focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none shadow-inner"
+                      className="w-full h-16 px-6 pr-24 bg-surface-container-low border-none rounded-2xl text-lg font-bold text-on-surface placeholder:text-outline-variant/50 focus:ring-2 focus:ring-secondary/20 transition-all outline-none shadow-inner"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                       <button 
                         disabled={!prompt.trim() || !selectedDb}
                         onClick={handleSubmit}
-                        className="p-2.5 bg-secondary text-white rounded-xl hover:bg-secondary-dim disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-secondary/20"
+                        className="p-2.5 bg-secondary text-on-secondary rounded-xl hover:bg-secondary-dim disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-secondary/20"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
@@ -189,8 +188,8 @@ export default function AddChartModal() {
                   {selectedDb && (isSuggestionsLoading || suggestions.length > 0) && (
                     <div className="flex flex-wrap items-stretch gap-3 mt-4 animate-in fade-in duration-300">
                       {isSuggestionsLoading ? (
-                        <div className="flex items-center gap-1.5 text-sm text-zinc-500 font-medium px-2 py-1">
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                        <div className="flex items-center gap-1.5 text-xs text-on-surface-variant font-bold px-2 py-1 uppercase tracking-widest">
+                          <Loader2 className="w-4 h-4 animate-spin text-secondary" />
                           Generating suggestions...
                         </div>
                       ) : (
@@ -198,7 +197,7 @@ export default function AddChartModal() {
                           <button
                             key={idx}
                             onClick={() => setPrompt(suggestion)}
-                            className="text-sm p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md text-zinc-600 dark:text-zinc-300 font-medium rounded-xl transition-all text-left flex-1 min-w-[200px] shadow-sm leading-relaxed"
+                            className="text-[11px] p-4 bg-surface-container-lowest border border-outline-variant/15 hover:border-secondary/30 hover:shadow-md text-on-surface font-bold rounded-xl transition-all text-left flex-1 min-w-[200px] shadow-sm leading-relaxed uppercase tracking-wider"
                           >
                             {suggestion}
                           </button>
@@ -209,7 +208,7 @@ export default function AddChartModal() {
                </div>
 
               {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-200">
+                <div className="p-4 bg-error/10 text-error rounded-xl text-xs font-bold border border-error/20">
                   {error}
                 </div>
               )}
@@ -218,61 +217,61 @@ export default function AddChartModal() {
 
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Loader2 className="w-8 h-8 text-secondary animate-spin" />
+              <Loader2 className="w-10 h-10 text-secondary animate-spin" />
               <div className="text-center">
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-锌-50">AI is thinking...</h3>
-                <p className="text-xs text-zinc-500 mt-1">Generating and verifying SQL against the database.</p>
+                <h3 className="text-sm font-bold text-on-surface uppercase tracking-widest">AI is thinking...</h3>
+                <p className="text-[10px] text-on-surface-variant mt-2 font-bold uppercase tracking-tighter">Generating and verifying SQL against the database.</p>
               </div>
             </div>
           )}
 
           {generatedConfig && !isLoading && (
             <div className="flex flex-col gap-6 animate-in fade-in zoom-in duration-300">
-              <div className="p-5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl relative">
-                 <div className="absolute -top-3 left-4 bg-white dark:bg-zinc-900 px-2 text-xs font-bold text-secondary flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-800 rounded-full">
-                    <Code className="w-3 h-3" /> VERIFIED SQL GENERATED
+              <div className="p-6 bg-surface-container-low border border-outline-variant/10 rounded-xl relative">
+                 <div className="absolute -top-3 left-4 bg-secondary text-on-secondary px-3 py-0.5 text-[10px] font-bold flex items-center gap-1.5 border-none rounded-full shadow-lg shadow-secondary/10 uppercase tracking-widest">
+                    <Code className="w-3 h-3" /> SQL VERIFIED
                  </div>
                  
-                 <div className="flex flex-col gap-4 mt-2">
+                 <div className="flex flex-col gap-5 mt-4">
                     <div>
-                      <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Title</span>
-                      <p className="text-zinc-900 dark:text-zinc-100 font-medium">{generatedConfig.title}</p>
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Title</span>
+                      <p className="text-on-surface font-bold text-lg">{generatedConfig.title}</p>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Chart Type</span>
-                        <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium capitalize">{generatedConfig.chart_type}</p>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Chart Type</span>
+                        <p className="text-on-surface text-xs font-bold uppercase tracking-tighter">{generatedConfig.chart_type}</p>
                       </div>
                       <div>
-                        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">X-Axis</span>
-                        <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium font-mono">{generatedConfig.xaxis_column}</p>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">X-Axis</span>
+                        <p className="text-on-surface text-xs font-mono font-bold">{generatedConfig.xaxis_column}</p>
                       </div>
                       <div>
-                        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Y-Axis</span>
-                        <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium font-mono">{generatedConfig.yaxis_columns?.join(', ')}</p>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Y-Axis</span>
+                        <p className="text-on-surface text-xs font-mono font-bold">{generatedConfig.yaxis_columns?.join(', ')}</p>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Generated Query</span>
-                      <pre className="mt-2 p-3 bg-zinc-900 text-zinc-100 rounded-lg text-xs font-mono overflow-x-auto">
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Generated Query</span>
+                      <pre className="mt-2 p-4 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-mono overflow-x-auto shadow-inner">
                         {generatedConfig.sql}
                       </pre>
                     </div>
                  </div>
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
                 <button 
                   onClick={() => setGeneratedConfig(null)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+                  className="px-6 py-2.5 text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-widest"
                 >
                   Regenerate
                 </button>
                 <button 
                   onClick={handleAddToDashboard}
-                  className="flex items-center gap-2 px-5 py-2 bg-secondary text-white text-sm font-semibold rounded-lg hover:bg-secondary-dim transition-all shadow-md active:scale-95"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary text-xs font-bold rounded-lg hover:bg-secondary-dim transition-all shadow-lg shadow-secondary/20 active:scale-95 uppercase tracking-widest"
                 >
                   <Plus className="w-4 h-4" />
                   Add to Dashboard

@@ -22,7 +22,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="w-full sticky top-0 z-40 bg-zinc-50 dark:bg-zinc-950 flex justify-between items-center px-8 h-12 border-b border-zinc-200 dark:border-zinc-800">
+    <header className="w-full sticky top-0 z-40 bg-surface-container-lowest flex justify-between items-center px-8 h-12 border-b border-outline-variant/10">
       <div className="flex items-center gap-4">
         {isEditing && isEditMode ? (
           <input
@@ -32,34 +32,34 @@ export default function TopBar() {
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSave}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 bg-transparent border-b border-secondary outline-none px-1 py-0.5"
+            className="text-sm font-semibold tracking-tight text-on-surface bg-transparent border-b border-secondary outline-none px-1 py-0.5"
           />
         ) : (
           <div 
             onClick={() => isEditMode && setIsEditing(true)}
-            className={`flex items-center gap-2 group ${isEditMode ? 'cursor-pointer text-on-surface-variant' : 'text-zinc-900 dark:text-zinc-100'}`}
+            className={`flex items-center gap-2 group ${isEditMode ? 'cursor-pointer text-on-surface-variant' : 'text-on-surface'}`}
           >
             <span className="text-sm font-semibold tracking-tight">
               {currentDashboard?.name || "Project Sales Dashboard"}
             </span>
-            {isEditMode && <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500" />}
+            {isEditMode && <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant" />}
           </div>
         )}
       </div>
 
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/10">
             <button
               onClick={() => setIsEditMode(false)}
-              className={`p-1.5 rounded-md text-xs font-medium transition-all ${!isEditMode ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+              className={`p-1.5 rounded-md text-xs font-medium transition-all ${!isEditMode ? 'bg-surface-container-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
               title="View Mode"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={() => setIsEditMode(true)}
-              className={`p-1.5 rounded-md text-xs font-medium transition-all ${isEditMode ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+              className={`p-1.5 rounded-md text-xs font-medium transition-all ${isEditMode ? 'bg-surface-container-lowest text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
               title="Edit Mode"
             >
               <Edit2 className="w-4 h-4" />
@@ -70,7 +70,7 @@ export default function TopBar() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPublishModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-indigo-600/10"
+                className="flex items-center gap-2 px-3 py-1.5 bg-secondary hover:bg-secondary-dim text-on-secondary text-xs font-bold rounded-lg transition-all shadow-md shadow-secondary/10"
                 title="Publish Snapshot"
               >
                 <Globe className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export default function TopBar() {
               </button>
               <button
                 onClick={() => setDashboardSettingsModalOpen(true)}
-                className="p-2 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
+                className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-all"
                 title="Dashboard Settings"
               >
                 <Settings className="w-4 h-4" />
