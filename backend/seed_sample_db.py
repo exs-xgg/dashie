@@ -6,7 +6,7 @@ Usage:
     python seed_sample_db.py
 
 Prerequisites:
-    pip install psycopg2-binary faker
+    pip install psycopg2-binary faker python-dotenv
 """
 
 import random
@@ -16,12 +16,17 @@ from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from faker import Faker
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file in the same directory
+load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
-PG_HOST = "localhost"
-PG_PORT = 5432
-PG_USER = "postgres"
-PG_PASSWORD = "changeme"
+PG_HOST = os.getenv("PG_HOST", "localhost")
+PG_PORT = int(os.getenv("PG_PORT", 5432))
+PG_USER = os.getenv("PG_USER", "postgres")
+PG_PASSWORD = os.getenv("PG_PASSWORD", "changeme")
 TARGET_DB = "sample_db"
 
 fake = Faker()

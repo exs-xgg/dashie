@@ -12,3 +12,4 @@ python-dotenv
 alembic
 jinja2
 pydantic-settings
+faker
