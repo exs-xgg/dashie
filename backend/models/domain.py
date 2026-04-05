@@ -45,6 +45,7 @@ class Dashboard(SQLModel, table=True):
 
     # Relationship to panels
     panels: List["DashboardPanel"] = Relationship(back_populates="dashboard")
+    snapshots: List["DashboardSnapshot"] = Relationship(back_populates="dashboard")
 
 class DashboardPanel(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -62,6 +63,17 @@ class DashboardPanel(SQLModel, table=True):
 
     # Relationships
     dashboard: Dashboard = Relationship(back_populates="panels")
+
+class DashboardSnapshot(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    dashboard_id: uuid.UUID = Field(foreign_key="dashboard.id")
+    name: str
+    snapshot_data: Any = Field(sa_column=Column(JSON)) # Capture panels + data
+    filter_settings: Any = Field(sa_column=Column(JSON)) # Captured date_range and grouping
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationships
+    dashboard: Dashboard = Relationship(back_populates="snapshots")
 
 class QueryHistory(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)

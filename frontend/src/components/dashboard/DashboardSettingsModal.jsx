@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Layout, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { X, Settings, Layout, Save, Trash2, AlertTriangle, Globe, Copy, Check, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../../stores/useStore';
 
@@ -10,7 +10,9 @@ export default function DashboardSettingsModal() {
     dashboards, 
     selectedDashboardId, 
     updateDashboard,
-    deleteDashboard
+    deleteDashboard,
+    snapshots,
+    fetchSnapshots
   } = useStore();
 
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ export default function DashboardSettingsModal() {
   });
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (currentDashboard && isDashboardSettingsModalOpen) {
@@ -30,8 +33,16 @@ export default function DashboardSettingsModal() {
         name: currentDashboard.name || '',
         description: currentDashboard.description || ''
       });
+      fetchSnapshots(selectedDashboardId);
     }
   }, [currentDashboard, isDashboardSettingsModalOpen]);
+
+  const copyToClipboard = (id) => {
+    const embedCode = `<iframe src="${window.location.origin}/embed/${id}" width="100%" height="600px" frameborder="0"></iframe>`;
+    navigator.clipboard.writeText(embedCode);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   if (!isDashboardSettingsModalOpen) return null;
 
@@ -115,6 +126,49 @@ export default function DashboardSettingsModal() {
                 className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-500 outline-none transition-all text-sm resize-none"
               />
             </div>
+          </div>
+
+          {/* Snapshots Section */}
+          <div className="space-y-4 pt-6 mt-6 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2 text-zinc-400 mb-2">
+              <Globe className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Published Snapshots</span>
+            </div>
+
+            {snapshots.length === 0 ? (
+              <div className="p-8 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-2xl">
+                <p className="text-sm text-zinc-500">No snapshots published yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {snapshots.map((snapshot) => (
+                  <div key={snapshot.id} className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">{snapshot.name}</h4>
+                      <p className="text-[10px] text-zinc-500 font-medium">Created {new Date(snapshot.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => window.open(`/embed/${snapshot.id}`, '_blank')}
+                        className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-800 rounded-lg transition-all border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700"
+                        title="View Snapshot"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(snapshot.id)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-bold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all"
+                      >
+                        {copiedId === snapshot.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>Embed</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Danger Zone Section */}

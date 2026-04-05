@@ -6,17 +6,29 @@ import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import WorkspacePage from './pages/WorkspacePage';
 import ConnectionsPage from './pages/ConnectionsPage';
+import EmbedPage from './pages/EmbedPage';
 import useStore from './stores/useStore';
 
 export default function App() {
   const { fetchDashboards, fetchDataSources } = useStore();
   const location = useLocation();
   const isDashboardPage = location.pathname.startsWith('/dashboard');
+  const isEmbedPage = location.pathname.startsWith('/embed');
 
   useEffect(() => {
     fetchDashboards();
     fetchDataSources();
   }, []);
+
+  if (isEmbedPage) {
+    return (
+      <div className="bg-background min-h-screen text-on-surface">
+        <Routes>
+          <Route path="/embed/:id" element={<EmbedPage />} />
+        </Routes>
+      </div>
+    );
+  }
 
   return (
     <div className="flex bg-background min-h-screen text-on-surface">

@@ -6,6 +6,7 @@ import DashboardPanelCard from '../components/dashboard/DashboardPanelCard';
 import DashboardSettingsModal from '../components/dashboard/DashboardSettingsModal';
 import DashboardFilters from '../components/dashboard/DashboardFilters';
 import FloatingToolbar from '../components/dashboard/FloatingToolbar';
+import PublishModal from '../components/dashboard/PublishModal';
 import useStore from '../stores/useStore';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -60,6 +61,7 @@ export default function DashboardPage() {
         onClose={() => setEditingPanel(null)}
       />
       <DashboardSettingsModal />
+      <PublishModal />
 
       <DashboardFilters />
 
