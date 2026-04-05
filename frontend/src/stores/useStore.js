@@ -7,7 +7,9 @@ const useStore = create((set, get) => ({
   selectedDashboardId: null,
   panels: [],
   mcpConnections: [],
+  snapshots: [],
   isAddChartModalOpen: false,
+  isPublishModalOpen: false,
   isDashboardSettingsModalOpen: false,
   isEditMode: false, // Default to View Only
   dateRange: {
@@ -178,6 +180,7 @@ const useStore = create((set, get) => ({
     }
   },
   setAddChartModalOpen: (isOpen) => set({ isAddChartModalOpen: isOpen }),
+  setPublishModalOpen: (isOpen) => set({ isPublishModalOpen: isOpen }),
   setDashboardSettingsModalOpen: (isOpen) => set({ isDashboardSettingsModalOpen: isOpen }),
 
   // CRUD Dashboards
@@ -313,6 +316,35 @@ const useStore = create((set, get) => ({
       }));
     } catch (err) {
       console.error("Failed to delete MCP connection:", err);
+    }
+  },
+
+  // Snapshot Actions
+  createSnapshot: async (data) => {
+    try {
+      const res = await axios.post('/api/snapshots', data);
+      set((state) => ({ snapshots: [res.data, ...state.snapshots] }));
+      return res.data;
+    } catch (err) {
+      console.error("Failed to create snapshot:", err);
+      throw err;
+    }
+  },
+  fetchSnapshots: async (dashboardId) => {
+    try {
+      const res = await axios.get(`/api/snapshots/dashboard/${dashboardId}`);
+      set({ snapshots: res.data });
+    } catch (err) {
+      console.error("Failed to fetch snapshots:", err);
+    }
+  },
+  fetchSnapshot: async (snapshotId) => {
+    try {
+      const res = await axios.get(`/api/snapshots/${snapshotId}`);
+      return res.data;
+    } catch (err) {
+      console.error("Failed to fetch snapshot:", err);
+      throw err;
     }
   },
 }));

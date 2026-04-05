@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import datasources, query, dashboards, mcp_connections
+from routers import datasources, query, dashboards, mcp_connections, snapshots
 from database import create_db_and_tables
 from config import get_settings
 
@@ -24,6 +24,7 @@ app.include_router(datasources.router, prefix="/api/datasources", tags=["Data So
 app.include_router(query.router, prefix="/api/query", tags=["Query"])
 app.include_router(dashboards.router, prefix="/api/dashboards", tags=["Dashboards"])
 app.include_router(mcp_connections.router, prefix="/api/mcp-connections", tags=["MCP Connections"])
+app.include_router(snapshots.router, prefix="/api/snapshots", tags=["Snapshots"])
 
 @app.get("/health")
 def health_check():

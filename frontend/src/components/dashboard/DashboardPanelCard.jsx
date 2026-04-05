@@ -11,18 +11,23 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { format, parseISO, isValid, startOfWeek, getQuarter } from 'date-fns';
 
-export default function DashboardPanelCard({ panel, onDelete }) {
+export default function DashboardPanelCard({ panel, onDelete, readOnly = false, preloadedResults = null }) {
   const { executePanelQuery, fixPanel, dateRange, grouping, setEditingPanel, isEditMode, dashboards, selectedDashboardId } = useStore();
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
   const defaultColor = currentDashboard?.default_chart_color || '#6366f1';
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(preloadedResults);
+  const [loading, setLoading] = useState(!preloadedResults);
   const [fixing, setFixing] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
     if (panel.chart_type === 'text') {
+      setLoading(false);
+      return;
+    }
+    if (readOnly && preloadedResults) {
+      setData(preloadedResults);
       setLoading(false);
       return;
     }
@@ -74,19 +79,21 @@ export default function DashboardPanelCard({ panel, onDelete }) {
             )}
           </div>
         )}
-        <div 
-          className={`flex items-center gap-1 transition-opacity ${isEditMode ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 hover:opacity-100'}`}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <button onClick={fetchData} title="Refresh" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><RefreshCw className="w-4 h-4" /></button>
-          {isEditMode && (
-            <>
-              <button onClick={() => setEditingPanel(panel)} title="Edit Configuration" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><Code2 className="w-4 h-4" /></button>
-              <button onClick={() => onDelete(panel.id)} title="Delete Chart" className="p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors dark:hover:bg-zinc-800"><Trash2 className="w-4 h-4" /></button>
-            </>
-          )}
-        </div>
+        {!readOnly && (
+          <div
+            className={`flex items-center gap-1 transition-opacity ${isEditMode ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 hover:opacity-100'}`}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <button onClick={fetchData} title="Refresh" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><RefreshCw className="w-4 h-4" /></button>
+            {isEditMode && (
+              <>
+                <button onClick={() => setEditingPanel(panel)} title="Edit Configuration" className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors dark:hover:bg-zinc-800"><Code2 className="w-4 h-4" /></button>
+                <button onClick={() => onDelete(panel.id)} title="Delete Chart" className="p-1.5 text-zinc-400 hover:text-error hover:bg-error/5 rounded transition-colors dark:hover:bg-zinc-800"><Trash2 className="w-4 h-4" /></button>
+              </>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="flex-1 min-h-0 overflow-hidden relative">
@@ -99,23 +106,25 @@ export default function DashboardPanelCard({ panel, onDelete }) {
         {error && !loading && (
           <div className="h-full flex flex-col items-center justify-center p-4 gap-4 text-center">
             <p className="text-sm text-error font-medium">{error}</p>
-            <button
-              onClick={handleFix}
-              disabled={fixing}
-              className="flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-bold rounded-lg transition-all border border-secondary/20"
-            >
-              {fixing ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Fixing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Fix with AI
-                </>
-              )}
-            </button>
+            {!readOnly && (
+              <button
+                onClick={handleFix}
+                disabled={fixing}
+                className="flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-bold rounded-lg transition-all border border-secondary/20"
+              >
+                {fixing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Fixing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Fix with AI
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
 

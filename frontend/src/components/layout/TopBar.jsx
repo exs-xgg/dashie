@@ -1,9 +1,9 @@
 import React from 'react';
-import { Edit2, Eye, Settings } from 'lucide-react';
+import { Edit2, Eye, Settings, Globe } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function TopBar() {
-  const { dashboards, selectedDashboardId, updateDashboard, isEditMode, setIsEditMode, setDashboardSettingsModalOpen } = useStore();
+  const { dashboards, selectedDashboardId, updateDashboard, isEditMode, setIsEditMode, setDashboardSettingsModalOpen, setPublishModalOpen } = useStore();
   const [isEditing, setIsEditing] = React.useState(false);
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
   const [editValue, setEditValue] = React.useState("");
@@ -68,6 +68,14 @@ export default function TopBar() {
 
           {isEditMode && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPublishModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-indigo-600/10"
+                title="Publish Snapshot"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Publish</span>
+              </button>
               <button
                 onClick={() => setDashboardSettingsModalOpen(true)}
                 className="p-2 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
