@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useStore from '../../stores/useStore';
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { CHART_COLORS, DEFAULT_CHART_COLOR } from '../../constants/chartColors';
 import { Trash2, Code2, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import {
   flexRender,
@@ -14,7 +15,7 @@ import { format, parseISO, isValid, startOfWeek, getQuarter } from 'date-fns';
 export default function DashboardPanelCard({ panel, onDelete, readOnly = false, preloadedResults = null }) {
   const { executePanelQuery, fixPanel, dateRange, grouping, setEditingPanel, isEditMode, dashboards, selectedDashboardId } = useStore();
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
-  const defaultColor = currentDashboard?.default_chart_color || '#006e2e';
+  const defaultColor = currentDashboard?.default_chart_color || DEFAULT_CHART_COLOR;
 
   const [data, setData] = useState(preloadedResults);
   const [loading, setLoading] = useState(!preloadedResults);
@@ -222,7 +223,6 @@ function BarChartRenderer({ data, defaultColor, stacked }) {
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
-  const COLORS = ['#006e2e', '#5f5e61', '#9e3f4e', '#5e5e67', '#004a1c', '#3f3f42', '#782232', '#45454e'];
   if (!keys.length) return <div className="p-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant text-center">Insufficient Data</div>;
 
   return (
@@ -248,7 +248,7 @@ function BarChartRenderer({ data, defaultColor, stacked }) {
             key={key} 
             dataKey={key} 
             stackId={stacked ? "a" : undefined}
-            fill={keys.length === 1 ? defaultColor : COLORS[i % COLORS.length]}
+            fill={keys.length === 1 ? defaultColor : CHART_COLORS[i % CHART_COLORS.length]}
             radius={stacked ? (i === keys.length - 1 ? [2, 2, 0, 0] : [0, 0, 0, 0]) : [2, 2, 0, 0]}
           />
         ))}
@@ -261,7 +261,6 @@ function LineChartRenderer({ data, defaultColor }) {
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
-  const COLORS = ['#006e2e', '#5f5e61', '#9e3f4e', '#5e5e67', '#004a1c', '#3f3f42', '#782232', '#45454e'];
   if (!keys.length) return <div className="p-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant text-center">Insufficient Data</div>;
 
   return (
@@ -286,9 +285,9 @@ function LineChartRenderer({ data, defaultColor }) {
             key={key} 
             type="monotone" 
             dataKey={key} 
-            stroke={keys.length === 1 ? defaultColor : COLORS[i % COLORS.length]}
+            stroke={keys.length === 1 ? defaultColor : CHART_COLORS[i % CHART_COLORS.length]}
             strokeWidth={2} 
-            dot={{ r: 3, strokeWidth: 2, fill: keys.length === 1 ? defaultColor : COLORS[i % COLORS.length] }}
+            dot={{ r: 3, strokeWidth: 2, fill: keys.length === 1 ? defaultColor : CHART_COLORS[i % CHART_COLORS.length] }}
             activeDot={{ r: 5 }}
           />
         ))}
@@ -353,7 +352,6 @@ function AreaChartRenderer({ data, defaultColor, stacked }) {
   const { grouping } = useStore();
   const keys = Object.keys(data[0] || {}).filter(k => typeof data[0][k] === 'number');
   const xAxisKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
-  const COLORS = ['#006e2e', '#5f5e61', '#9e3f4e', '#5e5e67', '#004a1c', '#3f3f42', '#782232', '#45454e'];
   if (!keys.length) return <div className="p-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant text-center">Insufficient Data</div>;
 
   return (
@@ -380,8 +378,8 @@ function AreaChartRenderer({ data, defaultColor, stacked }) {
             dataKey={key} 
             stackId={stacked ? "a" : undefined}
             fillOpacity={0.1}
-            fill={keys.length === 1 ? defaultColor : COLORS[i % COLORS.length]}
-            stroke={keys.length === 1 ? defaultColor : COLORS[i % COLORS.length]}
+            fill={keys.length === 1 ? defaultColor : CHART_COLORS[i % CHART_COLORS.length]}
+            stroke={keys.length === 1 ? defaultColor : CHART_COLORS[i % CHART_COLORS.length]}
             strokeWidth={2} 
           />
         ))}
@@ -394,14 +392,13 @@ function PieChartRenderer({ data }) {
   const nameKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'string') || Object.keys(data[0] || {})[0];
   const valueKey = Object.keys(data[0] || {}).find(k => typeof data[0][k] === 'number');
   if (!valueKey) return <div className="p-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant text-center">Insufficient Data</div>;
-  const COLORS = ['#006e2e', '#5f5e61', '#9e3f4e', '#5e5e67', '#004a1c', '#3f3f42', '#782232', '#45454e'];
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie data={data} dataKey={valueKey} nameKey={nameKey} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={4}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #adb3b4', fontSize: '10px', fontWeight: 700 }} />

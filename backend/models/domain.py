@@ -38,7 +38,7 @@ class Dashboard(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     description: Optional[str] = None
-    default_chart_color: str = Field(default="#6366f1")
+    default_chart_color: str = Field(default="#36a2eb")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

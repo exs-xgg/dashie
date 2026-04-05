@@ -1,6 +1,7 @@
 import React from 'react';
 import { Type, BarChart2, Layout, Palette } from 'lucide-react';
 import useStore from '../../stores/useStore';
+import { DEFAULT_CHART_COLOR } from '../../constants/chartColors';
 
 export default function FloatingToolbar() {
   const { setAddChartModalOpen, addTextPanel, selectedDashboardId, dashboards, updateDashboard, isEditMode } = useStore();
@@ -8,7 +9,7 @@ export default function FloatingToolbar() {
   if (!isEditMode) return null;
 
   const currentDashboard = dashboards.find(d => d.id === selectedDashboardId);
-  const defaultColor = currentDashboard?.default_chart_color || '#006e2e';
+  const defaultColor = currentDashboard?.default_chart_color || DEFAULT_CHART_COLOR;
 
   const handleAddText = async (type) => {
     if (!selectedDashboardId) return;
