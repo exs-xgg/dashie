@@ -12,7 +12,8 @@ export default function DashboardSettingsModal() {
     updateDashboard,
     deleteDashboard,
     snapshots,
-    fetchSnapshots
+    fetchSnapshots,
+    deleteSnapshot
   } = useStore();
 
   const navigate = useNavigate();
@@ -25,7 +26,9 @@ export default function DashboardSettingsModal() {
   });
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [snapshotToDelete, setSnapshotToDelete] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [deletingSnapshot, setDeletingSnapshot] = useState(false);
 
   useEffect(() => {
     if (currentDashboard && isDashboardSettingsModalOpen) {
@@ -66,6 +69,19 @@ export default function DashboardSettingsModal() {
       navigate('/');
     } catch (err) {
       console.error("Failed to delete dashboard:", err);
+    }
+  };
+
+  const handleDeleteSnapshot = async () => {
+    if (!snapshotToDelete) return;
+    setDeletingSnapshot(true);
+    try {
+      await deleteSnapshot(snapshotToDelete);
+      setSnapshotToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete snapshot:", err);
+    } finally {
+      setDeletingSnapshot(false);
     }
   };
 
@@ -164,6 +180,14 @@ export default function DashboardSettingsModal() {
                         {copiedId === snapshot.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>Embed</span>
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setSnapshotToDelete(snapshot.id)}
+                        className="p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30"
+                        title="Delete Snapshot"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -220,6 +244,41 @@ export default function DashboardSettingsModal() {
             )}
           </button>
         </div>
+
+        {/* Snapshot Delete Confirmation Overlay */}
+        {snapshotToDelete && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/80 backdrop-blur-sm rounded-2xl">
+            <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-zinc-200 dark:border-zinc-800 text-center flex flex-col">
+              <div className="w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-zinc-50">Delete Snapshot?</h3>
+              <p className="text-zinc-500 text-sm mb-8 font-medium">This snapshot and its embed link will be permanently disabled. Existing iFrames will stop working.</p>
+              <div className="flex gap-3 mt-auto">
+                <button 
+                  type="button"
+                  onClick={() => setSnapshotToDelete(null)}
+                  disabled={deletingSnapshot}
+                  className="flex-1 py-3 font-bold text-zinc-500 hover:text-zinc-700 bg-zinc-100 dark:bg-zinc-800 rounded-xl transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleDeleteSnapshot}
+                  disabled={deletingSnapshot}
+                  className="flex-1 bg-error text-white py-3 rounded-xl font-bold shadow-lg shadow-error/20 hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deletingSnapshot ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                  ) : (
+                    'Delete'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Overlay */}
         {showDeleteConfirm && (

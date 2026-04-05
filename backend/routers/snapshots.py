@@ -61,6 +61,19 @@ async def create_snapshot(
 
         snapshot_panels.append(panel_data)
 
+    # Revolving 5r logic: delete oldest if records are already 5 or more
+    existing_snapshots = session.exec(
+        select(DashboardSnapshot)
+        .where(DashboardSnapshot.dashboard_id == request.dashboard_id)
+        .order_by(DashboardSnapshot.created_at.asc())
+    ).all()
+
+    if len(existing_snapshots) >= 5:
+        # Delete such that we have at most 4 left before adding the new one
+        to_delete_count = len(existing_snapshots) - 4
+        for i in range(to_delete_count):
+            session.delete(existing_snapshots[i])
+
     snapshot = DashboardSnapshot(
         dashboard_id=request.dashboard_id,
         name=request.name,
@@ -72,6 +85,19 @@ async def create_snapshot(
     session.commit()
     session.refresh(snapshot)
     return snapshot
+
+@router.delete("/{snapshot_id}")
+async def delete_snapshot(
+    snapshot_id: uuid.UUID,
+    session: Session = Depends(get_session)
+):
+    snapshot = session.get(DashboardSnapshot, snapshot_id)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    
+    session.delete(snapshot)
+    session.commit()
+    return {"status": "success"}
 
 @router.get("/{snapshot_id}")
 async def get_snapshot(

@@ -323,10 +323,23 @@ const useStore = create((set, get) => ({
   createSnapshot: async (data) => {
     try {
       const res = await axios.post('/api/snapshots', data);
-      set((state) => ({ snapshots: [res.data, ...state.snapshots] }));
+      set((state) => ({ 
+        snapshots: [res.data, ...state.snapshots].slice(0, 5) 
+      }));
       return res.data;
     } catch (err) {
       console.error("Failed to create snapshot:", err);
+      throw err;
+    }
+  },
+  deleteSnapshot: async (snapshotId) => {
+    try {
+      await axios.delete(`/api/snapshots/${snapshotId}`);
+      set((state) => ({
+        snapshots: state.snapshots.filter(s => s.id !== snapshotId)
+      }));
+    } catch (err) {
+      console.error("Failed to delete snapshot:", err);
       throw err;
     }
   },
