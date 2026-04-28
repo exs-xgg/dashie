@@ -18,6 +18,7 @@ async def generate_sql_query(
     datasource_id: uuid.UUID,
     prompt: str,
     chart_type: Optional[str] = None,
+    previous_sql: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
     datasource = session.get(DataSource, datasource_id)
@@ -45,7 +46,7 @@ async def generate_sql_query(
     start_time = time.time()
     
     try:
-        data = await agent_service.run_query(str(datasource_id), uri, prompt, context, chart_type)
+        data = await agent_service.run_query(str(datasource_id), uri, prompt, context, chart_type, previous_sql)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate query: {str(e)}")
         

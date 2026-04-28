@@ -27,6 +27,7 @@ class AgentState(MessagesState):
     retries: int = 0
     max_retries: int = 3
     error_message: Optional[str] = None
+    previous_sql: Optional[str] = None
 
 class AgentService:
     def __init__(self):
@@ -77,7 +78,13 @@ class AgentService:
         {state.get('manifest', '')}
         """
 
-        messages = [SystemMessage(content=system_prompt), HumanMessage(content=state['prompt'])]
+        messages = [SystemMessage(content=system_prompt)]
+
+        if state.get("previous_sql"):
+            refinement_msg = f"A previous SQL query was generated for this chart:\n{state['previous_sql']}\n\nPlease refine or modify this query based on the new request: {state['prompt']}"
+            messages.append(HumanMessage(content=refinement_msg))
+        else:
+            messages.append(HumanMessage(content=state['prompt']))
         
         if state.get("error_message"):
             error_msg = f"Your previous SQL query failed with this database error:\n{state['error_message']}\n\nPlease correct the SQL query and ensure column names and syntax are valid."
@@ -130,13 +137,14 @@ class AgentService:
         # Create a prebuilt ReAct agent for tool invocation
         return create_react_agent(self.llm, tools)
 
-    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str, preferred_chart_type: Optional[str] = None) -> Dict[str, Any]:
+    async def run_query(self, datasource_id: str, connection_uri: str, prompt: str, schema_context: str, preferred_chart_type: Optional[str] = None, previous_sql: Optional[str] = None) -> Dict[str, Any]:
         final_state = await self.graph.ainvoke({
             "datasource_id": datasource_id,
             "connection_uri": connection_uri,
             "manifest": schema_context,
             "prompt": prompt,
             "preferred_chart_type": preferred_chart_type,
+            "previous_sql": previous_sql,
             "retries": 0,
             "max_retries": 3,
             "error_message": None,

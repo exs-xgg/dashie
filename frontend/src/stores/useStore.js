@@ -132,11 +132,14 @@ const useStore = create((set, get) => ({
     }
   },
 
-  generateQuery: async (datasourceId, prompt, chartType = null) => {
+  generateQuery: async (datasourceId, prompt, chartType = null, previousSql = null) => {
     try {
       let url = `/api/query/generate?datasource_id=${datasourceId}&prompt=${encodeURIComponent(prompt)}`;
       if (chartType && chartType !== 'auto') {
          url += `&chart_type=${encodeURIComponent(chartType)}`;
+      }
+      if (previousSql) {
+        url += `&previous_sql=${encodeURIComponent(previousSql)}`;
       }
       const res = await axios.post(url);
       return res.data;

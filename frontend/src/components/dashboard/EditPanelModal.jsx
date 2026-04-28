@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Code, BarChart2, Type } from 'lucide-react';
+import { X, Save, AlertCircle, Code, BarChart2, Type, Sparkles, Loader2, ChevronRight } from 'lucide-react';
 import useStore from '../../stores/useStore';
 
 export default function EditPanelModal({ panel, isOpen, onClose }) {
-  const { updatePanel } = useStore();
+  const { updatePanel, generateQuery } = useStore();
   const [formData, setFormData] = useState({
     title: '',
     generated_sql: '',
@@ -11,6 +11,8 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
     content: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
+  const [refinementPrompt, setRefinementPrompt] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -19,7 +21,9 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
         title: panel.title || '',
         generated_sql: panel.generated_sql || '',
         chart_type: panel.chart_type || '',
-        content: panel.content || ''
+        content: panel.content || '',
+        xaxis_column: panel.chart_config?.xaxis_column || '',
+        yaxis_columns: panel.chart_config?.yaxis_columns || []
       });
     }
   }, [panel, isOpen]);
@@ -43,11 +47,45 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
   };
   if (!isOpen || !panel) return null;
 
+  const handleRefine = async () => {
+    if (!refinementPrompt.trim() || !panel.data_source_id) return;
+
+    setIsRefining(true);
+    setError(null);
+    try {
+      const config = await generateQuery(
+        panel.data_source_id,
+        refinementPrompt,
+        formData.chart_type,
+        formData.generated_sql
+      );
+      setFormData({
+        ...formData,
+        title: config.title,
+        generated_sql: config.sql,
+        chart_type: config.chart_type,
+        xaxis_column: config.xaxis_column,
+        yaxis_columns: config.yaxis_columns
+      });
+      setRefinementPrompt('');
+    } catch (err) {
+      setError(err.response?.data?.detail || err.message || "Failed to refine chart");
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       setIsSaving(true);
       setError(null);
-      await updatePanel(panel.dashboard_id, panel.id, formData);
+      await updatePanel(panel.dashboard_id, panel.id, {
+        ...formData,
+        chart_config: formData.chart_type !== 'text' ? {
+          xaxis_column: formData.xaxis_column,
+          yaxis_columns: formData.yaxis_columns
+        } : undefined
+      });
       onClose();
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Failed to update chart");
@@ -98,6 +136,35 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
               className="w-full bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
             />
           </div>
+
+          {formData.chart_type !== 'text' && (
+            <div className="flex flex-col gap-2 p-4 bg-secondary/5 rounded-xl border border-secondary/10">
+              <label className="text-[10px] font-bold text-secondary uppercase tracking-widest flex items-center gap-2">
+                <Sparkles className="w-3 h-3" />
+                Refine with AI
+              </label>
+              <div className="relative mt-1">
+                <input
+                  type="text"
+                  value={refinementPrompt}
+                  onChange={(e) => setRefinementPrompt(e.target.value)}
+                  placeholder="e.g., Change to a bar chart, or filter by year..."
+                  className="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-2.5 pr-12 text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
+                  onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
+                />
+                <button
+                  onClick={handleRefine}
+                  disabled={isRefining || !refinementPrompt.trim()}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-secondary text-on-secondary rounded-md hover:bg-secondary-dim disabled:opacity-50 transition-all"
+                >
+                  {isRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[9px] text-on-surface-variant font-medium">
+                Describe the changes you want to make, and AI will update the SQL and configuration.
+              </p>
+            </div>
+          )}
 
           {formData.chart_type === 'text' ? (
             <div className="flex flex-col gap-2">
@@ -179,6 +246,27 @@ export default function EditPanelModal({ panel, isOpen, onClose }) {
                    <option value="pie">Pie Chart</option>
                    <option value="table">Table / Text Data</option>
                  </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">X-Axis Column</label>
+                  <input
+                    type="text"
+                    value={formData.xaxis_column}
+                    onChange={(e) => setFormData({ ...formData, xaxis_column: e.target.value })}
+                    className="w-full bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-secondary/20 transition-all font-mono"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Y-Axis Columns (comma separated)</label>
+                  <input
+                    type="text"
+                    value={formData.yaxis_columns?.join(', ')}
+                    onChange={(e) => setFormData({ ...formData, yaxis_columns: e.target.value.split(',').map(s => s.trim()) })}
+                    className="w-full bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-secondary/20 transition-all font-mono"
+                  />
+                </div>
               </div>
 
               {/* SQL Editor */}

@@ -47,8 +47,14 @@ export default function AddChartModal() {
     setIsLoading(true);
     setError(null);
     try {
-      const config = await generateQuery(selectedDb, prompt, preferredChartType);
+      const config = await generateQuery(
+        selectedDb,
+        prompt,
+        preferredChartType,
+        generatedConfig ? generatedConfig.sql : null
+      );
       setGeneratedConfig(config);
+      setPrompt("");
     } catch (err) {
       setError(err?.response?.data?.detail || err.message || "An error occurred while generating the chart");
     } finally {
@@ -109,7 +115,7 @@ export default function AddChartModal() {
         </div>
         
         <div className="p-8 flex flex-col gap-8 overflow-y-auto custom-scrollbar">
-          {!generatedConfig && !isLoading && (
+          {!isLoading && (
             <>
               {/* Database & Chart Preference Selection */}
               <div className="grid grid-cols-2 gap-6">
@@ -160,7 +166,7 @@ export default function AddChartModal() {
               <div className="flex flex-col gap-2">
                  <label htmlFor="nl-query-input" className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-secondary" />
-                    What would you like to visualize?
+                    {generatedConfig ? "Refine your chart" : "What would you like to visualize?"}
                  </label>
                  <div className="relative group mt-1">
                     <input
@@ -170,7 +176,7 @@ export default function AddChartModal() {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="e.g., Show me top 10 products by revenue this month."
+                      placeholder={generatedConfig ? "e.g., Change it to a line chart, or filter by region..." : "e.g., Show me top 10 products by revenue this month."}
                       className="w-full h-16 px-6 pr-24 bg-surface-container-low border-none rounded-2xl text-lg font-bold text-on-surface placeholder:text-outline-variant/50 focus:ring-2 focus:ring-secondary/20 transition-all outline-none shadow-inner"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -185,7 +191,7 @@ export default function AddChartModal() {
                   </div>
                   
                   {/* AI Suggestions */}
-                  {selectedDb && (isSuggestionsLoading || suggestions.length > 0) && (
+                  {!generatedConfig && selectedDb && (isSuggestionsLoading || suggestions.length > 0) && (
                     <div className="flex flex-wrap items-stretch gap-3 mt-4 animate-in fade-in duration-300">
                       {isSuggestionsLoading ? (
                         <div className="flex items-center gap-1.5 text-xs text-on-surface-variant font-bold px-2 py-1 uppercase tracking-widest">
@@ -234,40 +240,73 @@ export default function AddChartModal() {
                  
                  <div className="flex flex-col gap-5 mt-4">
                     <div>
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Title</span>
-                      <p className="text-on-surface font-bold text-lg">{generatedConfig.title}</p>
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={generatedConfig.title}
+                        onChange={(e) => setGeneratedConfig({...generatedConfig, title: e.target.value})}
+                        className="w-full bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-on-surface font-bold text-lg focus:ring-2 focus:ring-secondary/20 outline-none"
+                      />
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Chart Type</span>
-                        <p className="text-on-surface text-xs font-bold uppercase tracking-tighter">{generatedConfig.chart_type}</p>
+                        <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Chart Type</label>
+                        <select
+                          value={generatedConfig.chart_type}
+                          onChange={(e) => setGeneratedConfig({...generatedConfig, chart_type: e.target.value})}
+                          className="w-full bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-on-surface text-xs font-bold uppercase tracking-tighter focus:ring-2 focus:ring-secondary/20 outline-none"
+                        >
+                          <option value="bar">Bar</option>
+                          <option value="stacked_bar">Stacked Bar</option>
+                          <option value="line">Line</option>
+                          <option value="pie">Pie</option>
+                          <option value="area">Area</option>
+                          <option value="stacked_area">Stacked Area</option>
+                          <option value="table">Table</option>
+                        </select>
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">X-Axis</span>
-                        <p className="text-on-surface text-xs font-mono font-bold">{generatedConfig.xaxis_column}</p>
+                        <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">X-Axis</label>
+                        <input
+                          type="text"
+                          value={generatedConfig.xaxis_column}
+                          onChange={(e) => setGeneratedConfig({...generatedConfig, xaxis_column: e.target.value})}
+                          className="w-full bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-on-surface text-xs font-mono font-bold focus:ring-2 focus:ring-secondary/20 outline-none"
+                        />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Y-Axis</span>
-                        <p className="text-on-surface text-xs font-mono font-bold">{generatedConfig.yaxis_columns?.join(', ')}</p>
+                        <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Y-Axes (comma separated)</label>
+                        <input
+                          type="text"
+                          value={generatedConfig.yaxis_columns?.join(', ')}
+                          onChange={(e) => setGeneratedConfig({...generatedConfig, yaxis_columns: e.target.value.split(',').map(s => s.trim())})}
+                          className="w-full bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-on-surface text-xs font-mono font-bold focus:ring-2 focus:ring-secondary/20 outline-none"
+                        />
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Generated Query</span>
-                      <pre className="mt-2 p-4 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-mono overflow-x-auto shadow-inner">
-                        {generatedConfig.sql}
-                      </pre>
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">SQL Query</label>
+                      <textarea
+                        value={generatedConfig.sql}
+                        onChange={(e) => setGeneratedConfig({...generatedConfig, sql: e.target.value})}
+                        className="mt-2 w-full h-48 p-4 bg-on-surface text-surface-container-lowest rounded-xl text-xs font-mono overflow-x-auto shadow-inner resize-none outline-none focus:ring-2 focus:ring-secondary/50"
+                        spellCheck="false"
+                      />
                     </div>
                  </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/10">
                 <button 
-                  onClick={() => setGeneratedConfig(null)}
+                  onClick={() => {
+                    setGeneratedConfig(null);
+                    setPrompt("");
+                  }}
                   className="px-6 py-2.5 text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-widest"
                 >
-                  Regenerate
+                  Clear
                 </button>
                 <button 
                   onClick={handleAddToDashboard}
