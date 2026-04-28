@@ -59,7 +59,10 @@ class AgentService:
         return builder.compile()
 
     async def _generate_sql_node(self, state: AgentState):
-        dialect = state['connection_uri'].split(':')[0]
+        # Extract base dialect (e.g. 'mysql' from 'mysql+pymysql')
+        raw_dialect = state['connection_uri'].split(':')[0]
+        dialect = raw_dialect.split('+')[0]
+
         system_prompt = f"""
         You are a highly skilled SQL analyst for dashie.
         Your goal is to answer the user's natural language question by:

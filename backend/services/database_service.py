@@ -62,6 +62,7 @@ class DatabaseService:
 
         engine = create_engine(url, connect_args={"connect_timeout": 10})
         inspector = inspect(engine)
+        preparer = engine.dialect.identifier_preparer
         
         schema_data = []
         
@@ -80,8 +81,9 @@ class DatabaseService:
                     sample_rows = []
                     try:
                         # Fetch up to 3 sample rows
-                        # Using text() and quote table_name to handle mixed case
-                        result = connection.execute(text(f'SELECT * FROM "{table_name}" LIMIT 3'))
+                        # Using proper identifier quoting for the dialect (e.g. "table" for PG, `table` for MySQL)
+                        quoted_table = preparer.quote(table_name)
+                        result = connection.execute(text(f'SELECT * FROM {quoted_table} LIMIT 3'))
                         
                         # Serialize row data to make it JSON friendly
                         for row in result.mappings().all():
