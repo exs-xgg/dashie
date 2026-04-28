@@ -13,3 +13,5 @@ alembic
 jinja2
 pydantic-settings
 faker
+pymysql
+cryptography
